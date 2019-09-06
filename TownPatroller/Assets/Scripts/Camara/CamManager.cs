@@ -1,0 +1,76 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.UI;
+
+public class CamManager : MonoBehaviour
+{
+    private bool camAvalible;
+    private WebCamTexture CamDevice;
+    private Texture defaultBackground;
+
+    public RawImage background;
+    public AspectRatioFitter fit;
+    public Text text;
+
+    private uint camIndex = 0;
+    private WebCamDevice[] devices;
+    private void Start()
+    {
+        defaultBackground = background.texture;
+        devices = WebCamTexture.devices;
+
+        InitCam();
+    }
+
+    private void Update()
+    {
+        if (!camAvalible)
+            return;
+
+        float ratio = (float)CamDevice.width / (float)CamDevice.height;
+        fit.aspectRatio = ratio;
+
+        float scaleY = CamDevice.videoVerticallyMirrored ? -1f : 1f;
+        background.rectTransform.localScale = new Vector3(1f, scaleY, 1f);
+
+        int orient = -CamDevice.videoRotationAngle;
+        background.rectTransform.localEulerAngles = new Vector3(0, 0, orient);
+    }
+
+    private void InitCam()
+    {
+        if (CamDevice != null)
+        {
+            if (CamDevice.isPlaying)
+            {
+                CamDevice.Stop();
+            }
+        }
+
+        if (devices.Length == 0)
+        {
+            Debug.Log("No camara detected");
+            text.text = "No camara detected";
+            camAvalible = false;
+            return;
+        }
+
+        CamDevice = new WebCamTexture(devices[camIndex].name, Screen.width, Screen.height);
+
+        CamDevice.Play();
+        background.texture = CamDevice;
+
+        camAvalible = true;
+    }
+
+    public void SwitchCam()
+    {
+        camIndex++;
+
+        if (devices.Length - 1 < camIndex)
+            camIndex = 0;
+
+        InitCam();
+    }
+}

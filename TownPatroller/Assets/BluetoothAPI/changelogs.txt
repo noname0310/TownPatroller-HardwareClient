@@ -1,0 +1,12 @@
++ 4.4
+Fix bug resulting distinct messages being concatenated affecting some Android, iOS and MacOS users.
++ 4.3.1
+Add fix for a bug on Android version occurring with some bluetooth modules
++ 4.3
+Add support for Bluetooth Classic for UWP
+Add new stream mode FixedLengthStream
++ 4.2.6
+Fix (Library not imported) on MacOS
++ 4.0
+isDeviceFound is now isDevicePaired
+stopListening is now Disconnect
