@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using ArduinoBluetoothAPI;
 using System;
 using TownPatroller.Bluetooth.StatusIO;
+using TownPatroller.Console;
 
 public class BTCore : MonoBehaviour
 {
@@ -14,12 +15,39 @@ public class BTCore : MonoBehaviour
     string deviceName;
 
     public Text Middletext;
+    public GameObject MainConsoleContent;
+    public GameObject PacketConsoleContent;
+
+    private InGameConsole MainConsole;
+    private InGameConsole PacketConsole;
+
+    private StatusDeserializer statusDeserializer;
+
     string received_message;
 
     void Start()
     {
-        InitBT();
         objectCarDevice = GameObject.Find("CarStatusObject");
+        MainConsoleContent = GameObject.Find("MainConsoleContent");
+        PacketConsoleContent = GameObject.Find("PacketConsoleContent");
+        MainConsole = MainConsoleContent.GetComponent<InGameConsole>();
+        PacketConsole = PacketConsoleContent.GetComponent<InGameConsole>();
+
+        statusDeserializer = new StatusDeserializer();
+        statusDeserializer.OnParsed += StatusDeserializer_OnParsed;
+        statusDeserializer.OnParsedError += StatusDeserializer_OnParsedError;
+
+        InitBT();
+    }
+
+    private void StatusDeserializer_OnParsedError(char packettype, int value)
+    {
+        MainConsole.println("ParsedERROR : " + packettype + "  " + value);
+    }
+
+    private void StatusDeserializer_OnParsed(char packettype, int value)
+    {
+        MainConsole.println("PacketParsed : " + packettype + "  " + value);
     }
 
     void Update()
@@ -34,6 +62,7 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.Disconnect();
             Middletext.text = "Disconnected";
+            MainConsole.println("Disconnected");
         }
     }
 
@@ -49,12 +78,13 @@ public class BTCore : MonoBehaviour
             bluetoothHelper.OnConnectionFailed += OnConnectionFailed;
             bluetoothHelper.OnDataReceived += OnMessageReceived;
 
-            bluetoothHelper.setFixedLengthBasedStream(3);
+            bluetoothHelper.setFixedLengthBasedStream(8);
         }
         catch (Exception ex)
         {
             Debug.Log(ex.Message);
             Middletext.text = ex.Message;
+            MainConsole.println(ex.Message);
         }
     }
 
@@ -62,7 +92,8 @@ public class BTCore : MonoBehaviour
     {
         received_message = bluetoothHelper.Read();
         Debug.Log(received_message);
-        Middletext.text = received_message;
+        PacketConsole.println(received_message);
+        statusDeserializer.AddDeserializeQueue(received_message);
         objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.UpdateInfo(received_message);
     }
 
@@ -72,11 +103,12 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.StartListening();
             Middletext.text = "Connected";
+            MainConsole.println("Connected");
         }
         catch (Exception ex)
         {
             Debug.Log(ex.Message);
-            Middletext.text = ex.Message;
+            MainConsole.println(ex.Message);
         }
 
     }
@@ -84,7 +116,7 @@ public class BTCore : MonoBehaviour
     void OnConnectionFailed()
     {
         Debug.Log("Connection Failed");
-        Middletext.text = "Connection Failed";
+        MainConsole.println("Connection Failed");
     }
 
     #endregion
@@ -110,6 +142,7 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.Disconnect();
             Middletext.text = "Disconnected";
+            MainConsole.println("Disconnected");
         }
     }
 

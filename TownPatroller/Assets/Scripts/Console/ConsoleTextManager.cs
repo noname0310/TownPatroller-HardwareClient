@@ -8,27 +8,56 @@ public class ConsoleTextManager : MonoBehaviour
 {
     public GameObject MainConsoleContent;
     public GameObject PacketConsoleContent;
+
+    public GameObject MainScrollView;
+    public GameObject PacketScrollView;
+
     public Text MainTextPrefab;
     public Text PacketTextPrefab;
+
+    private ScrollRect MainScrollRect;
+    private ScrollRect PacketScrollRect;
 
     private InGameConsole MainConsole;
     private InGameConsole PacketConsole;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
+        MainScrollView = GameObject.Find("Console Scroll View");
+        PacketScrollView = GameObject.Find("Packet Scroll View");
+
+        MainScrollRect = MainScrollView.GetComponent<ScrollRect>();
+        PacketScrollRect = PacketScrollView.GetComponent<ScrollRect>();
+
         MainConsoleContent = GameObject.Find("MainConsoleContent");
         PacketConsoleContent = GameObject.Find("PacketConsoleContent");
 
-        MainConsole = new InGameConsole(MainConsoleContent, MainTextPrefab);
-        PacketConsole = new InGameConsole(PacketConsoleContent, PacketTextPrefab);
+        DeleteChildObject(MainConsoleContent);
+        DeleteChildObject(PacketConsoleContent);
 
-        for (int i = 0; i < 10; i++)
-            MainConsole.println("1234567891234567891234567891234sjdhskjfhskdlfmlflkfjbrejfeiojfejioj");
+        MainConsoleContent.AddComponent<InGameConsole>();
+        MainConsole = MainConsoleContent.GetComponent<InGameConsole>();
+        MainConsole._new(MainConsoleContent, MainTextPrefab, MainScrollRect);
+
+        PacketConsoleContent.AddComponent<InGameConsole>();
+        PacketConsole = PacketConsoleContent.GetComponent<InGameConsole>();
+        PacketConsole._new(PacketConsoleContent, PacketTextPrefab, PacketScrollRect);
+
+        MainConsole.println(" ");
+        PacketConsole.println(" ");
     }
 
     // Update is called once per frame
     void Update()
     {
+    }
+
+    void DeleteChildObject(GameObject ParentObject)
+    {
+        for (int i = 0; i < ParentObject.transform.childCount; i++)
+        {
+            Destroy(ParentObject.transform.GetChild(i).GetComponent<Text>());
+        }
     }
 }

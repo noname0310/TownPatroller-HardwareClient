@@ -11,10 +11,21 @@ namespace TownPatroller.Bluetooth.StatusIO
     {
         public delegate void ParseEvent(char packettype, int value);
         public event ParseEvent OnParsed;
+        public event ParseEvent OnParsedError;
 
         private int index = 0;
         private char packettype = '\0';
         private string packetvalue = "";
+
+        private int outvalue;
+
+        public void AddDeserializeQueue(string msg)
+        {
+            foreach (var item in msg)
+            {
+                AddDeserializeQueue(item);
+            }
+        }
 
         public void AddDeserializeQueue(char singlechar)
         {
@@ -25,6 +36,11 @@ namespace TownPatroller.Bluetooth.StatusIO
                     {
                         index = -1;
                         packetvalue = "";
+
+                        if (int.TryParse(packetvalue, out outvalue))
+                        {
+                            OnParsedError?.Invoke(packettype, outvalue);
+                        }
                     }
 
                     break;
@@ -35,6 +51,11 @@ namespace TownPatroller.Bluetooth.StatusIO
                     {
                         index = -1;
                         packetvalue = "";
+
+                        if (int.TryParse(packetvalue, out outvalue))
+                        {
+                            OnParsedError?.Invoke(packettype, outvalue);
+                        }
                     }
 
                     break;
@@ -45,10 +66,9 @@ namespace TownPatroller.Bluetooth.StatusIO
                     {
                         if (singlechar == '}')
                         {
-                            int value;
-                            if (int.TryParse(packetvalue, out value))
+                            if (int.TryParse(packetvalue, out outvalue))
                             {
-                                OnParsed?.Invoke(packettype, value);
+                                OnParsed?.Invoke(packettype, outvalue);
                             }
                         }
                         index = -1;
