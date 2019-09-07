@@ -6,9 +6,11 @@ using TownPatroller.CarDevice;
 public class ObjectCarDevice : MonoBehaviour
 {
     public BaseCarDivice Basecardivice;
+    public GameObject btCore;
 
     void Start()
     {
-        Basecardivice = new BaseCarDivice();
+        btCore = GameObject.Find("BTManager");
+        Basecardivice = new BaseCarDivice(btCore);
     }
 }

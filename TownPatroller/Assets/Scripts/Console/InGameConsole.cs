@@ -30,7 +30,7 @@ namespace TownPatroller.Console
 
             TextOBJs = new LinkedList<Text>();
             ActiveTextOBJs = new LinkedList<Text>();
-            CreatePos = (int)TextPrefab.rectTransform.sizeDelta.y;
+            CreatePos = 56;
         }
 
         private void CreateTextPrefabs(int createcount)

@@ -33,7 +33,7 @@ public class BTCore : MonoBehaviour
         MainConsole = MainConsoleContent.GetComponent<InGameConsole>();
         PacketConsole = PacketConsoleContent.GetComponent<InGameConsole>();
 
-        statusDeserializer = new StatusDeserializer();
+        statusDeserializer = objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.statusparser;
         statusDeserializer.OnParsed += StatusDeserializer_OnParsed;
         statusDeserializer.OnParsedError += StatusDeserializer_OnParsedError;
 
@@ -146,7 +146,7 @@ public class BTCore : MonoBehaviour
         }
     }
 
-    void SendMsg(string msg)
+    public void SendMsg(string msg)
     {
         bluetoothHelper.SendData(msg);
     }

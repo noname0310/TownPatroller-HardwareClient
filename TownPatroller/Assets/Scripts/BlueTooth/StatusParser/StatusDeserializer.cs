@@ -7,7 +7,7 @@ using TownPatroller.CarDevice;
 
 namespace TownPatroller.Bluetooth.StatusIO
 {
-    class StatusDeserializer
+    public class StatusDeserializer
     {
         public delegate void ParseEvent(char packettype, int value);
         public event ParseEvent OnParsed;
