@@ -43,9 +43,6 @@ public class ConsoleTextManager : MonoBehaviour
         PacketConsoleContent.AddComponent<InGameConsole>();
         PacketConsole = PacketConsoleContent.GetComponent<InGameConsole>();
         PacketConsole._new(PacketConsoleContent, PacketTextPrefab, PacketScrollRect);
-
-        MainConsole.println(" ");
-        PacketConsole.println(" ");
     }
 
     // Update is called once per frame

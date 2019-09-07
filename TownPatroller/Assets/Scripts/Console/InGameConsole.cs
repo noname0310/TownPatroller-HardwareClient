@@ -30,7 +30,7 @@ namespace TownPatroller.Console
 
             TextOBJs = new LinkedList<Text>();
             ActiveTextOBJs = new LinkedList<Text>();
-            CreatePos = 0;
+            CreatePos = (int)TextPrefab.rectTransform.sizeDelta.y;
         }
 
         private void CreateTextPrefabs(int createcount)
@@ -48,16 +48,18 @@ namespace TownPatroller.Console
 
             for (int i = 0; i < ConsoleContent.transform.childCount; i++)
             {
-                ConsoleContent.transform.GetChild(i).GetComponent<RectTransform>().transform.position = new Vector3(
-                    ConsoleContent.transform.GetChild(i).GetComponent<RectTransform>().transform.position.x,
-                    ConsoleContent.transform.GetChild(i).GetComponent<RectTransform>().position.y + 56/*(int)ActiveTextOBJs.Last.Value.rectTransform.sizeDelta.y*/,
-                    ConsoleContent.transform.GetChild(i).GetComponent<RectTransform>().transform.position.z);
+                RectTransform ChildRectTransform = ConsoleContent.transform.GetChild(i).GetComponent<RectTransform>();
+
+                ChildRectTransform.localPosition = new Vector3(
+                    ChildRectTransform.localPosition.x,
+                    ChildRectTransform.localPosition.y + (int)ActiveTextOBJs.Last.Value.rectTransform.sizeDelta.y,
+                    ChildRectTransform.localPosition.z);
             }
 
-            ActiveTextOBJs.Last.Value.rectTransform.transform.position = new Vector3(
-                ActiveTextOBJs.Last.Value.rectTransform.transform.position.x,
-                TextPrefab.rectTransform.transform.position.y,
-                ActiveTextOBJs.Last.Value.rectTransform.transform.position.z);
+            ActiveTextOBJs.Last.Value.rectTransform.localPosition = new Vector3(
+                ActiveTextOBJs.Last.Value.rectTransform.localPosition.x,
+                TextPrefab.rectTransform.localPosition.y,
+                ActiveTextOBJs.Last.Value.rectTransform.localPosition.z);
 
             ConsoleContent.GetComponent<RectTransform>().sizeDelta = new Vector2(ConsoleContent.GetComponent<RectTransform>().sizeDelta.x, CreatePos);
             scrollRect.verticalNormalizedPosition = 0;
@@ -85,14 +87,20 @@ namespace TownPatroller.Console
                 ActiveTextOBJs.AddFirst(text);
             }
 
-            ActiveTextOBJs.First.Value.gameObject.SetActive(true);
-            ActiveTextOBJs.First.Value.text = msg;
-            ActiveTextOBJs.First.Value.rectTransform.transform.position = new Vector3(
-                ActiveTextOBJs.First.Value.rectTransform.transform.position.x, 
-                ActiveTextOBJs.First.Value.rectTransform.transform.position.y - CreatePos, 
-                ActiveTextOBJs.First.Value.rectTransform.transform.position.z);
+            Text crtext = ActiveTextOBJs.First.Value;
 
-            CreatePos += 56;//(int)ActiveTextOBJs.First.Value.rectTransform.sizeDelta.y;
+            crtext.gameObject.SetActive(true);
+
+            crtext.text = msg;
+
+            crtext.GetComponent<ContentSizeFitter>().SetLayoutVertical();
+
+            crtext.rectTransform.localPosition = new Vector3(
+                crtext.rectTransform.localPosition.x, 
+                crtext.rectTransform.localPosition.y - CreatePos, 
+                crtext.rectTransform.localPosition.z);
+
+            CreatePos += (int)crtext.rectTransform.sizeDelta.y;
             ConsoleContent.GetComponent<RectTransform>().sizeDelta = new Vector2(ConsoleContent.GetComponent<RectTransform>().sizeDelta.x, CreatePos);
 
             scrollRect.verticalNormalizedPosition = 0;

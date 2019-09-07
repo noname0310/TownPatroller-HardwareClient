@@ -79,14 +79,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 'console messages...
-
-
-    packets...
-
-    packets...
-
-    packets...'
+  m_Text: console messages...
 --- !u!114 &4146288479154500930
 MonoBehaviour:
   m_ObjectHideFlags: 0
