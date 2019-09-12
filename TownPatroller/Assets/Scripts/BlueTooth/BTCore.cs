@@ -27,6 +27,8 @@ public class BTCore : MonoBehaviour
 
     void Start()
     {
+        InitBT();
+
         objectCarDevice = GameObject.Find("CarStatusObject");
         MainConsoleContent = GameObject.Find("MainConsoleContent");
         PacketConsoleContent = GameObject.Find("PacketConsoleContent");
@@ -36,8 +38,6 @@ public class BTCore : MonoBehaviour
         statusDeserializer = objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.statusparser;
         statusDeserializer.OnParsed += StatusDeserializer_OnParsed;
         statusDeserializer.OnParsedError += StatusDeserializer_OnParsedError;
-
-        InitBT();
     }
 
     private void StatusDeserializer_OnParsedError(char packettype, int value)
@@ -93,7 +93,6 @@ public class BTCore : MonoBehaviour
         received_message = bluetoothHelper.Read();
         Debug.Log(received_message);
         PacketConsole.println(received_message);
-        statusDeserializer.AddDeserializeQueue(received_message);
         objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.UpdateInfo(received_message);
     }
 

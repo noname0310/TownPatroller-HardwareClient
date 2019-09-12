@@ -18,7 +18,7 @@ namespace TownPatroller.Console
         private ScrollRect scrollRect;
 
         private const int CreateTickCount = 10;
-        private const int MaxCount = 100;
+        private const int MaxCount = 300;
 
         private int CreatePos;
 

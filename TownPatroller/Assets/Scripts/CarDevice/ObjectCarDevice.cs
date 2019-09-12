@@ -7,10 +7,12 @@ public class ObjectCarDevice : MonoBehaviour
 {
     public BaseCarDivice Basecardivice;
     public GameObject btCore;
+    public GameObject StatusUI;
 
-    void Start()
+    void Awake()
     {
         btCore = GameObject.Find("BTManager");
-        Basecardivice = new BaseCarDivice(btCore);
+        StatusUI = GameObject.Find("CarStatusPanel");
+        Basecardivice = new BaseCarDivice(btCore, StatusUI);
     }
 }

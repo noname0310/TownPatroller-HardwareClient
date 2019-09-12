@@ -71,6 +71,13 @@ namespace TownPatroller.Bluetooth.StatusIO
                                 OnParsed?.Invoke(packettype, outvalue);
                             }
                         }
+                        else
+                        {
+                            if (int.TryParse(packetvalue, out outvalue))
+                            {
+                                OnParsedError?.Invoke(packettype, outvalue);
+                            }
+                        }
                         index = -1;
                         packetvalue = "";
                     }
