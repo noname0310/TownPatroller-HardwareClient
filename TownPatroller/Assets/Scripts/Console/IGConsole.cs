@@ -13,14 +13,17 @@ public class IGConsole : MonoBehaviour
     public InGameConsole Main;
     public InGameConsole Packet;
 
-    private void Start()
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    public void Init()
     {
         MainConsoleContent = GameObject.Find("MainConsoleContent");
         PacketConsoleContent = GameObject.Find("PacketConsoleContent");
 
         Main = MainConsoleContent.GetComponent<InGameConsole>();
         Packet = PacketConsoleContent.GetComponent<InGameConsole>();
-
-        Instance = this;
     }
 }

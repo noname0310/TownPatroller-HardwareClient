@@ -14,8 +14,11 @@ namespace TownPatroller.Bluetooth
         public event Right2SpeakEvent OnRTSpeak;
 
         private BTCore bTCore;
-        private Queue<string> CommandQueue;
         private Coroutine EOPListenLimitEunmer;
+
+        private StringBuilder PacketBuffer;
+
+        private int EOPERRCount;
 
         public PingPongManager()
         {
@@ -25,26 +28,23 @@ namespace TownPatroller.Bluetooth
         public void _new(BTCore btCore)
         {
             bTCore = btCore;
-            CommandQueue = new Queue<string>();
+            PacketBuffer = new StringBuilder("[");
 
             OnRTSpeak?.Invoke();
             CommandDequeue();
             EOPListenLimitEunmer = StartCoroutine(EOPListenLimiter());
+
+            EOPERRCount = 0;
         }
 
         public void CommandEnqueue(string cmd)
         {
-            CommandQueue.Enqueue(cmd);
+            PacketBuffer.Append(cmd);
         }
 
         private void CommandDequeue()
         {
-            bTCore.SendMsg("[");
-            while (CommandQueue.Count != 0)
-            {
-                bTCore.SendMsg(CommandQueue.Dequeue());
-            }
-            bTCore.SendMsg("]");
+            StartCoroutine(SendPacket());
         }
 
         public void CheckEOP(string msg)
@@ -53,7 +53,8 @@ namespace TownPatroller.Bluetooth
             {
                 if (item == ']')
                 {
-                    StopCoroutine(EOPListenLimitEunmer);
+                    EOPERRCount = 0;
+                    StopCoroutine(EOPListenLimitEunmer);//
                     OnRTSpeak?.Invoke();
                     CommandDequeue();
                     EOPListenLimitEunmer = StartCoroutine(EOPListenLimiter());
@@ -61,14 +62,37 @@ namespace TownPatroller.Bluetooth
                 }
             }
         }
+        private IEnumerator SendPacket()
+        {
+            yield return new WaitForSeconds(0.05f);
+
+            PacketBuffer.Append(']');
+            bTCore.SendMsg(PacketBuffer.ToString());
+
+            PacketBuffer.Clear();
+            PacketBuffer.Append('[');
+            yield break;
+        }
 
         private IEnumerator EOPListenLimiter()
         {
             yield return new WaitForSeconds(3f);
+            IGConsole.Instance.Main.println("EOP Delayed more than 3sec!");
+            EOPERRCount++;
+
+            if (EOPERRCount >= 3)
+            {
+                EOPERRCount = 0;
+                IGConsole.Instance.Main.println("try to reconnecting");
+                bTCore.DisconnectBT();
+            }
+
+            //StopCoroutine(EOPListenLimitEunmer);
 
             OnRTSpeak?.Invoke();
             CommandDequeue();
             EOPListenLimitEunmer = StartCoroutine(EOPListenLimiter());
+            yield break;
         }
     }
 }

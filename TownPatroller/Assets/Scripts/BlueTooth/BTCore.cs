@@ -51,7 +51,7 @@ public class BTCore : MonoBehaviour
 
     private void StatusDeserializer_OnParsed(char packettype, int value)
     {
-        IGConsole.Instance.Main.println("PacketParsed : " + packettype + "  " + value);
+        //IGConsole.Instance.Main.println("PacketParsed : " + packettype + "  " + value);
     }
 
     void Update()
@@ -104,7 +104,7 @@ public class BTCore : MonoBehaviour
     {
         packetbuffer.Append(msg);
 
-        if(packetbuffer.Length > 8)
+        if(packetbuffer.Length > 20 || msg == "]")
         {
             IGConsole.Instance.Packet.println(packetbuffer.ToString());
             packetbuffer.Clear();
@@ -147,7 +147,7 @@ public class BTCore : MonoBehaviour
         }
     }
 
-    void DisconnectBT()
+    public void DisconnectBT()
     {
         if (bluetoothHelper == null)
             return;

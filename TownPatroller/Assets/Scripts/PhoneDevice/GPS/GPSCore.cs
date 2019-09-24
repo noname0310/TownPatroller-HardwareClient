@@ -13,6 +13,7 @@ public class GPSCore : MonoBehaviour
     private void Start()
     {
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         StartCoroutine(StartLocationService());
     }
 
@@ -21,6 +22,7 @@ public class GPSCore : MonoBehaviour
         if (!Input.location.isEnabledByUser)
         {
             Debug.Log("User has not enabled GPS");
+            IGConsole.Instance.Main.println("User has not enabled GPS");
             yield break;
         }
 
@@ -35,17 +37,22 @@ public class GPSCore : MonoBehaviour
         if (maxWait <= 0)
         {
             Debug.Log("Timed out");
+            IGConsole.Instance.Main.println("Timed out");
             yield break;
         }
 
         if (Input.location.status == LocationServiceStatus.Failed)
         {
             Debug.Log("Unable to determin device location");
+            IGConsole.Instance.Main.println("Unable to determin device location");
             yield break;
         }
 
         latitude = Input.location.lastData.latitude;
         longitude = Input.location.lastData.longitude;
+
+        IGConsole.Instance.Main.println("lat : " + latitude);
+        IGConsole.Instance.Main.println("long : " + longitude);
 
         yield break;
     }
