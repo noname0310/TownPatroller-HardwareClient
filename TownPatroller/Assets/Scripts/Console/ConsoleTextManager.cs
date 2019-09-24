@@ -6,6 +6,8 @@ using TownPatroller.Console;
 
 public class ConsoleTextManager : MonoBehaviour
 {
+    public static ConsoleTextManager instance { get; set; }
+
     public GameObject MainConsoleContent;
     public GameObject PacketConsoleContent;
 

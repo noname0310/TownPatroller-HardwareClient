@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace TownPatroller.Console
 {
-    class InGameConsole : MonoBehaviour
+    public class InGameConsole : MonoBehaviour
     {
         private GameObject ConsoleContent;
         private Text TextPrefab;

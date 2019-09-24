@@ -18,11 +18,6 @@ public class BTCore : MonoBehaviour
     string deviceName;
 
     public Text Middletext;
-    public GameObject MainConsoleContent;
-    public GameObject PacketConsoleContent;
-
-    private InGameConsole MainConsole;
-    private InGameConsole PacketConsole;
 
     private StatusDeserializer statusDeserializer;
     private PingPongManager ppManager;
@@ -41,10 +36,6 @@ public class BTCore : MonoBehaviour
         ppManager = this.gameObject.GetComponent<PingPongManager>();
 
         objectCarDevice = GameObject.Find("CarStatusObject");
-        MainConsoleContent = GameObject.Find("MainConsoleContent");
-        PacketConsoleContent = GameObject.Find("PacketConsoleContent");
-        MainConsole = MainConsoleContent.GetComponent<InGameConsole>();
-        PacketConsole = PacketConsoleContent.GetComponent<InGameConsole>();
 
         statusDeserializer = objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.statusparser;
         statusDeserializer.OnParsed += StatusDeserializer_OnParsed;
@@ -55,12 +46,12 @@ public class BTCore : MonoBehaviour
 
     private void StatusDeserializer_OnParsedError(char packettype, int value)
     {
-        MainConsole.println("ParsedERROR : " + packettype + "  " + value);
+        IGConsole.Instance.Main.println("ParsedERROR : " + packettype + "  " + value);
     }
 
     private void StatusDeserializer_OnParsed(char packettype, int value)
     {
-        MainConsole.println("PacketParsed : " + packettype + "  " + value);
+        IGConsole.Instance.Main.println("PacketParsed : " + packettype + "  " + value);
     }
 
     void Update()
@@ -75,7 +66,7 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.Disconnect();
             Middletext.text = "Disconnected";
-            MainConsole.println("Disconnected");
+            IGConsole.Instance.Main.println("Disconnected");
         }
     }
 
@@ -97,7 +88,7 @@ public class BTCore : MonoBehaviour
         {
             Debug.Log(ex.Message);
             Middletext.text = ex.Message;
-            MainConsole.println(ex.Message);
+            IGConsole.Instance.Main.println(ex.Message);
         }
     }
 
@@ -115,7 +106,7 @@ public class BTCore : MonoBehaviour
 
         if(packetbuffer.Length > 8)
         {
-            PacketConsole.println(packetbuffer.ToString());
+            IGConsole.Instance.Packet.println(packetbuffer.ToString());
             packetbuffer.Clear();
         }
     }
@@ -126,12 +117,12 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.StartListening();
             Middletext.text = "Connected";
-            MainConsole.println("Connected");
+            IGConsole.Instance.Main.println("Connected");
         }
         catch (Exception ex)
         {
             Debug.Log(ex.Message);
-            MainConsole.println(ex.Message);
+            IGConsole.Instance.Main.println(ex.Message);
         }
 
     }
@@ -139,7 +130,7 @@ public class BTCore : MonoBehaviour
     void OnConnectionFailed()
     {
         Debug.Log("Connection Failed");
-        MainConsole.println("Connection Failed");
+        IGConsole.Instance.Main.println("Connection Failed");
     }
 
     #endregion
@@ -165,7 +156,7 @@ public class BTCore : MonoBehaviour
         {
             bluetoothHelper.Disconnect();
             Middletext.text = "Disconnected";
-            MainConsole.println("Disconnected");
+            IGConsole.Instance.Main.println("Disconnected");
         }
     }
 
