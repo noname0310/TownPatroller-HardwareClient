@@ -32,10 +32,12 @@ public class CamManager : MonoBehaviour
         fit.aspectRatio = ratio;
 
         float scaleY = CamDevice.videoVerticallyMirrored ? -1f : 1f;
-        background.rectTransform.localScale = new Vector3(1f, scaleY, 1f);
+        if (background.rectTransform.localScale.x != 1f || background.rectTransform.localScale.y != scaleY || background.rectTransform.localScale.z != 1f)
+            background.rectTransform.localScale = new Vector3(1f, scaleY, 1f);
 
         int orient = -CamDevice.videoRotationAngle;
-        background.rectTransform.localEulerAngles = new Vector3(0, 0, orient);
+        if (background.rectTransform.localEulerAngles.x != 0 || background.rectTransform.localEulerAngles.y != 0 || background.rectTransform.localEulerAngles.z != orient)
+            background.rectTransform.localEulerAngles = new Vector3(0, 0, orient);
     }
 
     private void InitCam()

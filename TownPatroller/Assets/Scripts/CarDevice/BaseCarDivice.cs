@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Reflection;
 using UnityEngine;
+using TownPatroller.Bluetooth;
 using TownPatroller.Bluetooth.StatusIO;
 
 namespace TownPatroller.CarDevice
@@ -92,7 +93,7 @@ namespace TownPatroller.CarDevice
                     {
                         R_motorDIR = Convert.ToBoolean(value);
 
-                        int motorvalue = value;
+                        int motorvalue = R_motorpower;
                         if (!R_motorDIR)
                             motorvalue *= -1;
 
@@ -104,7 +105,7 @@ namespace TownPatroller.CarDevice
                     {
                         L_motorDIR = Convert.ToBoolean(value);
 
-                        int motorvalue = value;
+                        int motorvalue = L_motorpower;
                         if (!L_motorDIR)
                             motorvalue *= -1;
 
@@ -155,49 +156,49 @@ namespace TownPatroller.CarDevice
         protected override void Set_R_motorpower(byte value)
         {
             string msg = StatusSerializer.SerializeSingleMotorSpeed('f', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_L_motorpower(byte value)
         {
             string msg = StatusSerializer.SerializeSingleMotorSpeed('g', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_R_motorDIR(bool value)
         {
             string msg = StatusSerializer.SerializeSingleMotorSpeed('h', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_L_motorDIR(bool value)
         {
             string msg = StatusSerializer.SerializeSingleMotorSpeed('i', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_RF_LED(bool value)
         {
             string msg = StatusSerializer.SerializeLEDPower('j', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_LF_LED(bool value)
         {
             string msg = StatusSerializer.SerializeLEDPower('k', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_RB_LED(bool value)
         {
             string msg = StatusSerializer.SerializeLEDPower('l', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_LB_LED(bool value)
         {
             string msg = StatusSerializer.SerializeLEDPower('m', value);
-            btCore.GetComponent<BTCore>().SendMsg(msg);
+            btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
     }
 }

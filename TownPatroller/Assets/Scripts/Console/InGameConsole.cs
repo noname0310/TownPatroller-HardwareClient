@@ -20,6 +20,7 @@ namespace TownPatroller.Console
         private const int CreateTickCount = 10;
         private const int MaxCount = 300;
 
+        private bool firstmsg;
         private int CreatePos;
 
         public void _new(GameObject consoleContent, Text textPrefab, ScrollRect scrollrect)
@@ -30,7 +31,9 @@ namespace TownPatroller.Console
 
             TextOBJs = new LinkedList<Text>();
             ActiveTextOBJs = new LinkedList<Text>();
-            CreatePos = 56;
+
+            firstmsg = true;
+            CreatePos = 0;
         }
 
         private void CreateTextPrefabs(int createcount)
@@ -90,6 +93,14 @@ namespace TownPatroller.Console
             Text crtext = ActiveTextOBJs.First.Value;
 
             crtext.gameObject.SetActive(true);
+
+            if (firstmsg)
+            {
+                crtext.text = ",";
+                crtext.GetComponent<ContentSizeFitter>().SetLayoutVertical();
+                CreatePos = (int)crtext.rectTransform.sizeDelta.y;
+                firstmsg = false;
+            }
 
             crtext.text = msg;
 

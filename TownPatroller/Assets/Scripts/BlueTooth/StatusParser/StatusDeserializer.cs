@@ -15,7 +15,7 @@ namespace TownPatroller.Bluetooth.StatusIO
 
         private int index = 0;
         private char packettype = '\0';
-        private string packetvalue = "";
+        private StringBuilder packetvalue = new StringBuilder();
 
         private int outvalue;
 
@@ -35,9 +35,9 @@ namespace TownPatroller.Bluetooth.StatusIO
                     if (singlechar != '{')
                     {
                         index = -1;
-                        packetvalue = "";
+                        packetvalue.Clear();
 
-                        if (int.TryParse(packetvalue, out outvalue))
+                        if (int.TryParse(packetvalue.ToString(), out outvalue))
                         {
                             OnParsedError?.Invoke(packettype, outvalue);
                         }
@@ -50,9 +50,9 @@ namespace TownPatroller.Bluetooth.StatusIO
                     else
                     {
                         index = -1;
-                        packetvalue = "";
+                        packetvalue.Clear();
 
-                        if (int.TryParse(packetvalue, out outvalue))
+                        if (int.TryParse(packetvalue.ToString(), out outvalue))
                         {
                             OnParsedError?.Invoke(packettype, outvalue);
                         }
@@ -61,25 +61,25 @@ namespace TownPatroller.Bluetooth.StatusIO
                     break;
                 default:
                     if ('0' <= singlechar && singlechar <= '9')
-                        packetvalue += singlechar;
+                        packetvalue.Append(singlechar);
                     else
                     {
                         if (singlechar == '}')
                         {
-                            if (int.TryParse(packetvalue, out outvalue))
+                            if (int.TryParse(packetvalue.ToString(), out outvalue))
                             {
                                 OnParsed?.Invoke(packettype, outvalue);
                             }
                         }
                         else
                         {
-                            if (int.TryParse(packetvalue, out outvalue))
+                            if (int.TryParse(packetvalue.ToString(), out outvalue))
                             {
                                 OnParsedError?.Invoke(packettype, outvalue);
                             }
                         }
                         index = -1;
-                        packetvalue = "";
+                        packetvalue.Clear();
                     }
 
                     break;

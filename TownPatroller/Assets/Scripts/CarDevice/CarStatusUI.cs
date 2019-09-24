@@ -21,6 +21,9 @@ public class CarStatusUI : MonoBehaviour
     public Text LDStext;
     public Text RDStext;
 
+    private static string[] CarStatusNum0TO1000 = new string[1002];
+    private static string[] CarStatusNumm255TOm0 = new string[257];
+
     void Start()
     {
         FRLED = GameObject.Find("FRLED");
@@ -36,8 +39,26 @@ public class CarStatusUI : MonoBehaviour
         LDStext = GameObject.Find("LDStext").GetComponent<Text>();
         RDStext = GameObject.Find("RDStext").GetComponent<Text>();
 
+        InitStatusNum();
         InitLED();
         InitTexts();
+    }
+
+    private void InitStatusNum()
+    {
+        for (int i = 0; i < 1001; i++)
+        {
+            CarStatusNum0TO1000[i] = i.ToString();
+        }
+
+        CarStatusNum0TO1000[1001] = "ERR";
+
+        for(int i = 1; i < 257; i++)
+        {
+            CarStatusNumm255TOm0[i] = (i - 256).ToString();
+        }
+
+        CarStatusNumm255TOm0[0] = "MERR";
     }
 
     private void InitTexts()
@@ -53,13 +74,36 @@ public class CarStatusUI : MonoBehaviour
 
     private void SetText(FieldInfo textobj, int value)
     {
-        (textobj.GetValue(this) as Text).text = textobj.Name.Substring(0, textobj.Name.Length - 4) + " : " + value;
+        if (0 <= value)
+        {
+            if (1000 < value)
+                value = 1001;
+            (textobj.GetValue(this) as Text).text = CarStatusNum0TO1000[value];
+        }
+        else
+        {
+            if (value < -255)
+                value = -256;
+            (textobj.GetValue(this) as Text).text = CarStatusNumm255TOm0[value + 256];
+        }
     }
 
     public void SetText(string textobj, int value)
     {
         FieldInfo fieldInfo = this.GetType().GetField(textobj);
-        (fieldInfo.GetValue(this) as Text).text = fieldInfo.Name.Substring(0, fieldInfo.Name.Length - 4) + " : " + value;
+
+        if (0 <= value)
+        {
+            if (1000 < value)
+                value = 1001;
+            (fieldInfo.GetValue(this) as Text).text = CarStatusNum0TO1000[value];
+        }
+        else
+        {
+            if (value < -255)
+                value = -256;
+            (fieldInfo.GetValue(this) as Text).text = CarStatusNumm255TOm0[value + 256];
+        }
     }
 
     private void InitLED()

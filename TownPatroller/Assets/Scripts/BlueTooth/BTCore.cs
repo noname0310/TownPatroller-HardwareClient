@@ -1,11 +1,14 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using ArduinoBluetoothAPI;
-using System;
+using TownPatroller.Bluetooth;
 using TownPatroller.Bluetooth.StatusIO;
 using TownPatroller.Console;
+using TownPatroller.CarDevice;
 
 public class BTCore : MonoBehaviour
 {
@@ -22,12 +25,20 @@ public class BTCore : MonoBehaviour
     private InGameConsole PacketConsole;
 
     private StatusDeserializer statusDeserializer;
+    private PingPongManager ppManager;
 
-    string received_message;
+    private BaseCarDivice carDivice;
+
+    private string received_message;
+    private StringBuilder packetbuffer;
 
     void Start()
     {
+        packetbuffer = new StringBuilder();
         InitBT();
+
+        this.gameObject.GetComponent<PingPongObj>().initOBJ();
+        ppManager = this.gameObject.GetComponent<PingPongManager>();
 
         objectCarDevice = GameObject.Find("CarStatusObject");
         MainConsoleContent = GameObject.Find("MainConsoleContent");
@@ -38,6 +49,8 @@ public class BTCore : MonoBehaviour
         statusDeserializer = objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.statusparser;
         statusDeserializer.OnParsed += StatusDeserializer_OnParsed;
         statusDeserializer.OnParsedError += StatusDeserializer_OnParsedError;
+
+        carDivice = objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice;
     }
 
     private void StatusDeserializer_OnParsedError(char packettype, int value)
@@ -78,7 +91,7 @@ public class BTCore : MonoBehaviour
             bluetoothHelper.OnConnectionFailed += OnConnectionFailed;
             bluetoothHelper.OnDataReceived += OnMessageReceived;
 
-            bluetoothHelper.setFixedLengthBasedStream(8);
+            bluetoothHelper.setFixedLengthBasedStream(1);
         }
         catch (Exception ex)
         {
@@ -91,9 +104,20 @@ public class BTCore : MonoBehaviour
     void OnMessageReceived()
     {
         received_message = bluetoothHelper.Read();
-        Debug.Log(received_message);
-        PacketConsole.println(received_message);
+        AddStringToBuffer(received_message);
         objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.UpdateInfo(received_message);
+        ppManager.CheckEOP(received_message);
+    }
+
+    void AddStringToBuffer(string msg)
+    {
+        packetbuffer.Append(msg);
+
+        if(packetbuffer.Length > 8)
+        {
+            PacketConsole.println(packetbuffer.ToString());
+            packetbuffer.Clear();
+        }
     }
 
     void OnConnected()
@@ -147,7 +171,11 @@ public class BTCore : MonoBehaviour
 
     public void SendMsg(string msg)
     {
-        bluetoothHelper.SendData(msg);
+        if (bluetoothHelper != null)
+        {
+            if (bluetoothHelper.isConnected())
+                bluetoothHelper.SendData(msg);
+        }
     }
 
     #endregion
@@ -158,36 +186,98 @@ public class BTCore : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.W))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(255, 255, true, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(255, 255, true, true));
         }
-        if (Input.GetKeyDown(KeyCode.A))
+        else if (Input.GetKeyDown(KeyCode.A))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(255, 255, false, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(255, 255, false, true));
         }
-        if (Input.GetKeyDown(KeyCode.S))
+        else if (Input.GetKeyDown(KeyCode.S))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(255, 255, false, false));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(255, 255, false, false));
         }
-        if (Input.GetKeyDown(KeyCode.D))
+        else if (Input.GetKeyDown(KeyCode.D))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(255, 255, true, false));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(255, 255, true, false));
         }
 
         if (Input.GetKeyUp(KeyCode.W))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
         }
         else if (Input.GetKeyUp(KeyCode.A))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
         }
         else if (Input.GetKeyUp(KeyCode.S))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
         }
         else if (Input.GetKeyUp(KeyCode.D))
         {
-            bluetoothHelper.SendData(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
+            ppManager.CommandEnqueue(StatusSerializer.SerializeMotorSpeed(0, 0, true, true));
+        }
+
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            carDivice.lf_LED = !carDivice.lf_LED;
+        }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            carDivice.rf_LED = !carDivice.rf_LED;
+        }
+        if (Input.GetKeyDown(KeyCode.Z))
+        {
+            carDivice.lb_LED = !carDivice.lb_LED;
+        }
+        if (Input.GetKeyDown(KeyCode.C))
+        {
+            carDivice.rb_LED = !carDivice.rb_LED;
+        }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            if (carDivice.lf_LED || carDivice.rf_LED)
+            {
+                carDivice.lf_LED = false;
+                carDivice.rf_LED = false;
+            }
+            else
+            {
+                carDivice.lf_LED = true;
+                carDivice.rf_LED = true;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            if (carDivice.lb_LED || carDivice.rb_LED)
+            {
+                carDivice.lb_LED = false;
+                carDivice.rb_LED = false;
+            }
+            else
+            {
+                carDivice.lb_LED = true;
+                carDivice.rb_LED = true;
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.F))
+        {
+            if (carDivice.lf_LED || carDivice.rf_LED || carDivice.lb_LED || carDivice.rb_LED)
+            {
+                carDivice.lf_LED = false;
+                carDivice.rf_LED = false;
+                carDivice.lb_LED = false;
+                carDivice.rb_LED = false;
+            }
+            else
+            {
+                carDivice.lb_LED = true;
+                carDivice.rb_LED = true;
+                carDivice.lf_LED = true;
+                carDivice.rf_LED = true;
+            }
         }
     }
 
