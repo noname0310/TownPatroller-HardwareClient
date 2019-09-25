@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,11 +17,19 @@ public class GPSUIUpdater : MonoBehaviour
 
         Latitude = latitude.GetComponent<Text>();
         Longitude = longitude.GetComponent<Text>();
+
+        StartCoroutine(UpdateGPSUI());
     }
 
-    private void Update()
+    private IEnumerator UpdateGPSUI()
     {
-        Latitude.text = GPSCore.Instance.latitude.ToString();
-        Longitude.text = GPSCore.Instance.longitude.ToString();
+        yield return new WaitForSeconds(0.2f);
+
+        while (true)
+        {
+            Latitude.text = GPSCore.Instance.latitude.ToString();
+            Longitude.text = GPSCore.Instance.longitude.ToString();
+            yield return new WaitForSeconds(0.5f);
+        }
     }
 }

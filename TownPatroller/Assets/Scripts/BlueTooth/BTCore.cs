@@ -1,13 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Text;
 using System;
 using UnityEngine;
 using UnityEngine.UI;
 using ArduinoBluetoothAPI;
 using TownPatroller.Bluetooth;
 using TownPatroller.Bluetooth.StatusIO;
-using TownPatroller.Console;
 using TownPatroller.CarDevice;
 
 public class BTCore : MonoBehaviour
@@ -86,7 +83,6 @@ public class BTCore : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
             Middletext.text = ex.Message;
             IGConsole.Instance.Main.println(ex.Message);
         }
@@ -121,7 +117,6 @@ public class BTCore : MonoBehaviour
         }
         catch (Exception ex)
         {
-            Debug.Log(ex.Message);
             IGConsole.Instance.Main.println(ex.Message);
         }
 
@@ -129,7 +124,6 @@ public class BTCore : MonoBehaviour
 
     void OnConnectionFailed()
     {
-        Debug.Log("Connection Failed");
         IGConsole.Instance.Main.println("Connection Failed");
     }
 
