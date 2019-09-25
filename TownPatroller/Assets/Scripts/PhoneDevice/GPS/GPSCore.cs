@@ -7,8 +7,20 @@ public class GPSCore : MonoBehaviour
 {
     public static GPSCore Instance { get; set; }
 
-    public float latitude;
-    public float longitude;
+    public float latitude
+    {
+        get
+        {
+            return Input.location.lastData.latitude;
+        }
+    }
+    public float longitude
+    {
+        get
+        {
+            return Input.location.lastData.longitude;
+        }
+    }
 
     private void Start()
     {
@@ -21,7 +33,6 @@ public class GPSCore : MonoBehaviour
     {
         if (!Input.location.isEnabledByUser)
         {
-            Debug.Log("User has not enabled GPS");
             IGConsole.Instance.Main.println("User has not enabled GPS");
             yield break;
         }
@@ -36,23 +47,18 @@ public class GPSCore : MonoBehaviour
 
         if (maxWait <= 0)
         {
-            Debug.Log("Timed out");
-            IGConsole.Instance.Main.println("Timed out");
+            IGConsole.Instance.Main.println("GPS: Timed out");
             yield break;
         }
 
         if (Input.location.status == LocationServiceStatus.Failed)
         {
-            Debug.Log("Unable to determin device location");
-            IGConsole.Instance.Main.println("Unable to determin device location");
+            IGConsole.Instance.Main.println("GPS: Unable to determin device location");
             yield break;
         }
 
-        latitude = Input.location.lastData.latitude;
-        longitude = Input.location.lastData.longitude;
-
-        IGConsole.Instance.Main.println("lat : " + latitude);
-        IGConsole.Instance.Main.println("long : " + longitude);
+        //latitude = Input.location.lastData.latitude;
+        //longitude = Input.location.lastData.longitude;
 
         yield break;
     }

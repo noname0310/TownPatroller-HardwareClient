@@ -147,6 +147,9 @@ namespace TownPatroller.CarDevice
 
         public void UpdateInfo(string msg)
         {
+            if (msg == null)
+                return;
+
             foreach (var singlechar in msg)
             {
                 statusparser.AddDeserializeQueue(singlechar);
