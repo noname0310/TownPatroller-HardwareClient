@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace TownPatroller.Packet
 {
-    [Serializable]
     class PacketSerializer
     {
+
     }
 }

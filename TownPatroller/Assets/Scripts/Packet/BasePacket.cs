@@ -62,10 +62,26 @@ namespace TownPatroller.Packet
         ConnectionStat,
         CamFrame,
         CarStatus,
-        ChangeModeReq,
-        ModeChanged,
-        SetTrackReq,
-        SetTrackResponse,
-        ConsoleMsg
-    } 
+        UpdateDataReq,
+        UpdateChanged,
+        UniversalCommand
+    }
+
+    [Serializable]
+    enum ModeType
+    {
+        AutoDriveMode,
+        ManualDriveMode,
+        HaifManualDriveMode
+    }
+
+    [Serializable]
+    enum KeyType
+    {
+        PressDown,
+        PressUP,
+        Pressing,
+        ConsoleMsg,
+        Command
+    }
 }

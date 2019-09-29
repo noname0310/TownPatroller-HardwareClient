@@ -3,6 +3,8 @@ using UnityEngine.UI;
 
 public class CompassCore : MonoBehaviour
 {
+    public static CompassCore Instance { get; set; }
+
     private bool gyroEnabled;
     private Gyroscope gyro;
 
@@ -13,14 +15,28 @@ public class CompassCore : MonoBehaviour
     private float CompassAngle;
     private float AngleFromN;
 
+    private static string[] CarStatusNum0TO360 = new string[362];
+
     private void Start()
     {
+        Instance = this;
         Compass = GameObject.Find("CompassIndi");
         CompassUI = GameObject.Find("CompassText");
         RotText = CompassUI.GetComponent<Text>();
-        RotText.text = "0";
+        InitStatusNum();
+        RotText.text = CarStatusNum0TO360[0];
 
         gyroEnabled = EnableGyro();
+    }
+
+    private void InitStatusNum()
+    {
+        for (int i = 0; i < 361; i++)
+        {
+            CarStatusNum0TO360[i] = i.ToString();
+        }
+
+        CarStatusNum0TO360[361] = "ERR";
     }
 
     private bool EnableGyro()
@@ -51,7 +67,9 @@ public class CompassCore : MonoBehaviour
             AngleFromN = -CompassAngle;
             if (AngleFromN < 0)
                 AngleFromN += 360;
-            RotText.text = ((int)AngleFromN).ToString();
+            if (360 < (int)AngleFromN || (int)AngleFromN < 0)
+                AngleFromN = 361;
+            RotText.text = CarStatusNum0TO360[((int)AngleFromN)];
         }
     }
 }
