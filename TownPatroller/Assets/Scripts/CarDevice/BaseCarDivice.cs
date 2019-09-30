@@ -2,6 +2,7 @@
 using UnityEngine;
 using TownPatroller.Bluetooth;
 using TownPatroller.Bluetooth.StatusIO;
+using TPPacket.Class;
 
 namespace TownPatroller.CarDevice
 {
