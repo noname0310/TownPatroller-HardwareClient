@@ -23,8 +23,14 @@ public class GPSCore : MonoBehaviour
     private void Start()
     {
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        //DontDestroyOnLoad(gameObject);
         StartCoroutine(StartLocationService());
+    }
+
+    private void OnDestroy()
+    {
+        StopCoroutine(StartLocationService());
+        Instance = null;
     }
 
     private IEnumerator StartLocationService()

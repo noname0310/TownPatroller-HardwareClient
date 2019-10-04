@@ -62,8 +62,8 @@ public class BTCore : MonoBehaviour
         if (bluetoothHelper != null)
         {
             bluetoothHelper.Disconnect();
-            Middletext.text = "Disconnected";
-            IGConsole.Instance.Main.println("Disconnected");
+            //Middletext.text = "Disconnected";
+            //IGConsole.Instance.Main.println("Disconnected");
         }
     }
 

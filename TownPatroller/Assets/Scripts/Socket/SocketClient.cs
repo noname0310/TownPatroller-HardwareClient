@@ -61,9 +61,15 @@ namespace TownPatroller.SocketClient
             ClientTask.Start();
         }
 
+        public void ErrorStop()
+        {
+            StopTask = true;
+        }
+
         public void Stop()
         {
             StopTask = true;
+            PrintlnIGConsole("Disconnected from server");
         }
 
         private void InitSocket()
@@ -86,7 +92,6 @@ namespace TownPatroller.SocketClient
             tcpClient.Close();
             networkStream.Close();
             networkStream.Dispose();
-            PrintlnIGConsole("Disconnected from server");
         }
 
         public void SendInitPacket(object packet)

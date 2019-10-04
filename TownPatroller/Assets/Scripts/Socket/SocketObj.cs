@@ -6,6 +6,7 @@ using TPPacket.PacketManager;
 using TPPacket.Serializer;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class SocketObj : MonoBehaviour
 {
@@ -23,17 +24,20 @@ public class SocketObj : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
 
-        IPinputField = GameObject.Find("IPInputField").GetComponent<InputField>();
-        PortinputField = GameObject.Find("PortInputField").GetComponent<InputField>();
-        IDinputField = GameObject.Find("IDInputField").GetComponent<InputField>();
-        statuslabel = GameObject.Find("Status").GetComponent<Text>();
-
         TaskQueue = new Queue<Action>();
         socketClient = new SocketClient(TaskQueue, this);
     }
 
     public void OnConnectBtnClicked()
     {
+        if (IPinputField == null || PortinputField == null || IDinputField == null || statuslabel == null)
+        {
+            IPinputField = GameObject.Find("IPInputField").GetComponent<InputField>();
+            PortinputField = GameObject.Find("PortInputField").GetComponent<InputField>();
+            IDinputField = GameObject.Find("IDInputField").GetComponent<InputField>();
+            statuslabel = GameObject.Find("Status").GetComponent<Text>();
+        }
+
         if (socketClient.Connect(IPinputField.text, PortinputField.text))
         {
             ulong ID = Convert.ToUInt64(IDinputField.text);
@@ -64,17 +68,26 @@ public class SocketObj : MonoBehaviour
 
     private void PacketReceiver_OnDataInvoke(ulong Id, BasePacket basePacket)
     {
-        Debug.Log(3);
         if (basePacket.packetType == PacketType.ConnectionStat)
         {
             ConnectionPacket cp = (ConnectionPacket)basePacket;
             if(cp.IsConnecting == true)
             {
                 PrintStatusLabel("Connected");
+                SceneManager.LoadScene("MainScene", LoadSceneMode.Single);
             }
             else
             {
-                PrintStatusLabel("Already Connected");
+                if (cp.HasError == true)
+                {
+                    socketClient.ErrorStop();
+                    PrintStatusLabel("Already Connected");
+                }
+                else
+                {
+                    socketClient.Stop();
+                    SceneManager.LoadScene("ConnectScene", LoadSceneMode.Single);
+                }
             }
         }
     }
@@ -83,8 +96,6 @@ public class SocketObj : MonoBehaviour
     {
         Segment segment = (Segment)PacketDeserializer.Deserialize(Buffer);
         packetReceiver.AddSegment(segment);
-        Debug.Log(segment.SegmentCount);
-        Debug.Log(segment.CourrentCount);
     }
 
     public void PrintStatusLabel(string msg)
