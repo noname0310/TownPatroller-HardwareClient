@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TownPatroller.SocketClient
 {
-    class TaskQueueManager
+    public class TaskQueueManager
     {
         protected Queue<Action> TaskQueue;
         protected SocketObj socketObj;

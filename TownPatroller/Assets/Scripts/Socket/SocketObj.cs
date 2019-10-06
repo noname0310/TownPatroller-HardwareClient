@@ -1,15 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 using TownPatroller.SocketClient;
 using TPPacket.Packet;
 using TPPacket.PacketManager;
 using TPPacket.Serializer;
-using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.SceneManagement;
 
 public class SocketObj : MonoBehaviour
 {
+    public delegate void DataInvoked(BasePacket basePacket);
+    public event DataInvoked OnDataInvoke;
+
     public InputField IPinputField;
     public InputField PortinputField;
     public InputField IDinputField;
@@ -17,8 +21,11 @@ public class SocketObj : MonoBehaviour
 
     private PacketReciver packetReceiver;
     private Queue<Action> TaskQueue;
+    public SocketClient socketClient;
+
+    ulong ID;
+
     private object lockObject = new object();
-    private SocketClient socketClient;
 
     private void Start()
     {
@@ -40,7 +47,7 @@ public class SocketObj : MonoBehaviour
 
         if (socketClient.Connect(IPinputField.text, PortinputField.text))
         {
-            ulong ID = Convert.ToUInt64(IDinputField.text);
+            ID = Convert.ToUInt64(IDinputField.text);
             packetReceiver = new PacketReciver(ID);
             packetReceiver.OnDataInvoke += PacketReceiver_OnDataInvoke;
             PrintStatusLabel("Connection Pending");
@@ -64,6 +71,18 @@ public class SocketObj : MonoBehaviour
                 act.Invoke();
             }
         }
+    }
+
+    private void OnApplicationQuit()
+    {
+        Task task = new Task(() => QuitClient());
+        task.Start();
+    }
+
+    private void QuitClient()
+    {
+        socketClient.SendPacket(new ConnectionPacket(false, ID, true));
+        socketClient.Stop();
     }
 
     private void PacketReceiver_OnDataInvoke(ulong Id, BasePacket basePacket)
@@ -90,6 +109,7 @@ public class SocketObj : MonoBehaviour
                 }
             }
         }
+        OnDataInvoke?.Invoke(basePacket);
     }
 
     public void OnReceiveData(byte[] Buffer)

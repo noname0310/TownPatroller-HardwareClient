@@ -7,7 +7,12 @@ using TPPacket.Serializer;
 
 namespace TownPatroller.SocketClient
 {
-    class SocketClient : TaskQueueManager
+    interface IClientSender
+    {
+        void SendPacket(object packet);
+    }
+
+    public class SocketClient : TaskQueueManager, IClientSender
     {
         private TcpClient tcpClient;
         private NetworkStream networkStream;

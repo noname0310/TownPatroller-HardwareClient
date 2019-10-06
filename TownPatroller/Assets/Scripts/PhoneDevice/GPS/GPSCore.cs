@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using UnityEngine;
+using TPPacket.Class;
 
 public class GPSCore : MonoBehaviour
 {
@@ -18,6 +19,11 @@ public class GPSCore : MonoBehaviour
         {
             return Input.location.lastData.longitude;
         }
+    }
+
+    public GPSPosition GetGPSPosition()
+    {
+        return new GPSPosition(Input.location.lastData.latitude, Input.location.lastData.longitude);
     }
 
     private void Start()

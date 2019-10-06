@@ -12,7 +12,7 @@ namespace TownPatroller.GPSTracer
 {
     public class GPSMover : MonoBehaviour
     {
-        private GPSSpotManager gPSMover;
+        public GPSSpotManager gPSSpotManager;
         private BaseCarDivice carDivice;
         private GPSCore gPSCore;
         private CompassCore compassCore;
@@ -20,13 +20,18 @@ namespace TownPatroller.GPSTracer
 
         public void _new(BaseCarDivice baseCarDivice)
         {
-            gPSMover = new GPSSpotManager();
+            gPSSpotManager = new GPSSpotManager();
             carDivice = baseCarDivice;
             gPSCore = GPSCore.Instance;
             compassCore = CompassCore.Instance;
             EnableTraceMode = true;
 
             StartCoroutine(MoveCarAuto());
+        }
+
+        public void ChangeSpot(GPSSpotManager gPSSpotManager)
+        {
+
         }
 
         private IEnumerator MoveCarAuto()

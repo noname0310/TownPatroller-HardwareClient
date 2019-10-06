@@ -4,8 +4,8 @@ using UnityEngine.UI;
 public class CamManager : MonoBehaviour
 {
     private bool camAvalible;
-    private WebCamTexture CamDevice;
-    private Texture defaultBackground;
+    public WebCamTexture CamDevice;
+    public Texture defaultBackground;
 
     public RawImage background;
     public AspectRatioFitter fit;
@@ -19,6 +19,14 @@ public class CamManager : MonoBehaviour
         devices = WebCamTexture.devices;
 
         InitCam();
+    }
+
+    private void OnDestroy()
+    {
+        if (CamDevice != null)
+        {
+            CamDevice.Stop();
+        }
     }
 
     private void Update()

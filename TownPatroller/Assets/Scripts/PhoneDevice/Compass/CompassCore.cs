@@ -13,7 +13,7 @@ public class CompassCore : MonoBehaviour
     private Text RotText;
 
     private float CompassAngle;
-    private float AngleFromN;
+    public float AngleFromN;
 
     private static string[] CarStatusNum0TO360 = new string[362];
 
@@ -27,6 +27,15 @@ public class CompassCore : MonoBehaviour
         RotText.text = CarStatusNum0TO360[0];
 
         gyroEnabled = EnableGyro();
+    }
+
+    private void OnDestroy()
+    {
+        if (SystemInfo.supportsGyroscope)
+        {
+            gyro = Input.gyro;
+            gyro.enabled = false;
+        }
     }
 
     private void InitStatusNum()
