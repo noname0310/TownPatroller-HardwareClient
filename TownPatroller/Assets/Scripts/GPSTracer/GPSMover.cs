@@ -14,16 +14,12 @@ namespace TownPatroller.GPSTracer
     {
         public GPSSpotManager gPSSpotManager;
         private BaseCarDivice carDivice;
-        private GPSCore gPSCore;
-        private CompassCore compassCore;
         public bool EnableTraceMode { get; set; }
 
         public void _new(BaseCarDivice baseCarDivice)
         {
-            gPSSpotManager = new GPSSpotManager();
+            gPSSpotManager = new GPSSpotManager(-1);
             carDivice = baseCarDivice;
-            gPSCore = GPSCore.Instance;
-            compassCore = CompassCore.Instance;
             EnableTraceMode = true;
 
             StartCoroutine(MoveCarAuto());
@@ -36,13 +32,14 @@ namespace TownPatroller.GPSTracer
 
         private IEnumerator MoveCarAuto()
         {
+            gPSSpotManager.AddPos(new GPSPosition(null, 121, 312));
             yield return new WaitForSeconds(0.2f);
 
             while (true)
             {
                 yield return null;
 
-                if(EnableTraceMode)
+                if(EnableTraceMode && gPSSpotManager.GPSPositions.Count != 0)
                 {
                     //////////////////////
                 }

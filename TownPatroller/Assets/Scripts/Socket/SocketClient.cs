@@ -24,14 +24,16 @@ namespace TownPatroller.SocketClient
         private Task ClientTask;
         private bool StopTask;
 
+        private const int SegmentSize = 1024;
+
         public SocketClient(Queue<Action> taskQueue, SocketObj _socketObj)
         {
             TaskQueue = taskQueue;
             socketObj = _socketObj;
 
-            ReadBuffer = new byte[1024 * 4];
-            SendBuffer = new byte[1024 * 4];
-            packetSerializer = new PacketSerializer(1024 * 3, 1024 * 4);
+            ReadBuffer = new byte[SegmentSize];
+            SendBuffer = new byte[SegmentSize];
+            packetSerializer = new PacketSerializer(724, SegmentSize);
         }
 
         public bool Connect(string ip, string port)
@@ -85,7 +87,19 @@ namespace TownPatroller.SocketClient
                 {
                     if (0 < tcpClient.Available)
                     {
-                        networkStream.Read(ReadBuffer, 0, ReadBuffer.Length);
+                        int remaining = SegmentSize;
+                        int offset = 0;
+
+                        while (remaining > 0)
+                        {
+                            var readBytes = networkStream.Read(ReadBuffer, offset, remaining);
+                            if (readBytes == 0)
+                            {
+                                throw new System.Exception("disconnected");
+                            }
+                            offset += readBytes;
+                            remaining -= readBytes;
+                        }
                         OnReceiveData(ReadBuffer);
                     }
                 }
@@ -121,9 +135,11 @@ namespace TownPatroller.SocketClient
             }
             packetSerializer.Clear();
         }
+
         private void SendData()
         {
             networkStream.Write(SendBuffer, 0, SendBuffer.Length);
+            
             networkStream.Flush();
 
             for (int i = 0; i < SendBuffer.Length; i++)

@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 using TPPacket.Class;
+using TownPatroller.PhoneDevice.GPS;
 
 public class GPSCore : MonoBehaviour
 {
@@ -23,7 +24,7 @@ public class GPSCore : MonoBehaviour
 
     public GPSPosition GetGPSPosition()
     {
-        return new GPSPosition(Input.location.lastData.latitude, Input.location.lastData.longitude);
+        return new GPSsPosition(Input.location.lastData.latitude, Input.location.lastData.longitude).GetGPSPosition();
     }
 
     private void Start()

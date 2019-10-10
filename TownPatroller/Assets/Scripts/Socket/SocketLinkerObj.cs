@@ -65,7 +65,7 @@ public class SocketLinkerObj : MonoBehaviour
                         {
                             SendCamTexture = true;
                             texture2D = TextureToTexture2D(camManager.background.texture);
-                            clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));
+                            clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
                             Destroy(texture2D);
                         }
                         else
@@ -151,23 +151,25 @@ public class SocketLinkerObj : MonoBehaviour
     {
         yield return new WaitForSeconds(0.05f);
         texture2D = TextureToTexture2D(camManager.background.texture);
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));
+        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
         Destroy(texture2D);
     }
+
     private IEnumerator SendData()
     {
         yield return new WaitForSeconds(0.5f);
         texture2D = TextureToTexture2D(camManager.background.texture);////////////////////////////////////////////////////////////////////////////////////////
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));////////////////////////////////////////////////////////////////////////////////////
+        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));////////////////////////////////////////////////////////////////////////////////////
         Destroy(texture2D);///////////////////////////////////////////////
         clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));//미완
         clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
-        while (true)
+        while (false)
         {
-            yield return new WaitForSeconds(0.2f);
+            yield return new WaitForSeconds(2f);
             clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
         }
     }
+
     private Texture2D TextureToTexture2D(Texture texture)
     {
         Texture2D texture2D = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
