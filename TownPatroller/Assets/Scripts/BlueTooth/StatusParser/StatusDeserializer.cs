@@ -5,8 +5,11 @@ namespace TownPatroller.Bluetooth.StatusIO
     public class StatusDeserializer
     {
         public delegate void ParseEvent(char packettype, int value);
+        public delegate void ParseP();
         public event ParseEvent OnParsed;
         public event ParseEvent OnParsedError;
+        public event ParseP OnParsedSOP;
+        public event ParseP OnParsedEOP;
 
         private int index = 0;
         private char packettype = '\0';
@@ -32,7 +35,13 @@ namespace TownPatroller.Bluetooth.StatusIO
                         index = -1;
                         packetvalue.Clear();
 
-                        if (int.TryParse(packetvalue.ToString(), out outvalue))
+                        if (singlechar == '[')
+                            OnParsedSOP?.Invoke();
+
+                        else if (singlechar == ']')
+                            OnParsedEOP?.Invoke();
+
+                        else if (int.TryParse(packetvalue.ToString(), out outvalue))
                         {
                             OnParsedError?.Invoke(packettype, outvalue);
                         }

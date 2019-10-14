@@ -7,7 +7,7 @@ using TPPacket.Class;
 
 namespace TownPatroller.PhoneDevice.GPS
 {
-    class GPSsPosition
+    public class GPSsPosition
     {
         public readonly float latitude;
         public readonly float longitude;
@@ -22,5 +22,22 @@ namespace TownPatroller.PhoneDevice.GPS
         {
             return new GPSPosition("N/A", latitude, longitude);
         }
+
+        public static GPSsPosition operator +(GPSsPosition p1, GPSsPosition p2)
+        {
+            return new GPSsPosition(p1.latitude + p2.latitude, p1.longitude + p2.longitude);
+        }
+        public static GPSsPosition operator -(GPSsPosition p1, GPSsPosition p2)
+        {
+            return new GPSsPosition(p1.latitude - p2.latitude, p1.longitude - p2.longitude);
+        }
+    }
+    public static class GPSPosHelper
+    {
+        public static GPSsPosition GetGPSS(this GPSPosition gPSPosition)
+        {
+            return new GPSsPosition(gPSPosition.latitude, gPSPosition.longitude);
+        }
     }
 }
+

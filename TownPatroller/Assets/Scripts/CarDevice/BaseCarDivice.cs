@@ -10,6 +10,7 @@ namespace TownPatroller.CarDevice
         public StatusDeserializer statusparser;
         private GameObject btCore;
         private CarStatusUI StatusUI;
+        public bool HalfManualMode;
 
         public BaseCarDivice(GameObject BTcore, GameObject statusUI)
         {
@@ -18,6 +19,8 @@ namespace TownPatroller.CarDevice
 
             statusparser = new StatusDeserializer();
             statusparser.OnParsed += Statusparser_OnParsed;
+
+            HalfManualMode = false;
         }
 
         private void Statusparser_OnParsed(char packettype, int value)
@@ -151,26 +154,53 @@ namespace TownPatroller.CarDevice
             }
         }
 
+        private bool preinfo_R_motorDIR;
+        private bool preinfo_L_motorDIR;
+
         protected override void Set_R_motorpower(byte value)
         {
+            if (HalfManualMode == true)
+            {
+                if (preinfo_R_motorDIR == true)//front
+                {
+                    if (rh_sonardist > 10 || lh_sonardist > 10)
+                    {
+                        return;
+                    }
+                }
+            }
+
             string msg = StatusSerializer.SerializeSingleMotorSpeed('f', value);
             btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_L_motorpower(byte value)
         {
+            if (HalfManualMode == true)
+            {
+                if (preinfo_L_motorDIR == true)//front
+                {
+                    if (rh_sonardist > 10 || lh_sonardist > 10)
+                    {
+                        return;
+                    }
+                }
+            }
+
             string msg = StatusSerializer.SerializeSingleMotorSpeed('g', value);
             btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_R_motorDIR(bool value)
         {
+            preinfo_R_motorDIR = value;
             string msg = StatusSerializer.SerializeSingleMotorSpeed('h', value);
             btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }
 
         protected override void Set_L_motorDIR(bool value)
         {
+            preinfo_L_motorDIR = value;
             string msg = StatusSerializer.SerializeSingleMotorSpeed('i', value);
             btCore.GetComponent<PingPongManager>().CommandEnqueue(msg);
         }

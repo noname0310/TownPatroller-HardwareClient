@@ -70,7 +70,7 @@ public class CompassCore : MonoBehaviour
     {
         if (gyroEnabled)
         {
-            CompassAngle = -gyro.attitude.eulerAngles.z + 90;
+            CompassAngle = -gyro.attitude.eulerAngles.z;// + 90;
             Compass.transform.localRotation = Quaternion.Euler(0f, 0f, CompassAngle);
 
             AngleFromN = -CompassAngle;

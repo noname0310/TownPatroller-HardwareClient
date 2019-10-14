@@ -20,10 +20,12 @@ public class SocketLinkerObj : MonoBehaviour
     private IClientSender clientSender;
 
     private bool SendCamTexture;
+    private bool SendCarStatus;
 
     private void Start()
     {
-        SendCamTexture = true;////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        SendCamTexture = false;
+        SendCarStatus = true;
         CarStatusObject = GameObject.Find("CarStatusObject");
 
         objcarDevice = CarStatusObject.GetComponent<ObjectCarDevice>();
@@ -35,7 +37,7 @@ public class SocketLinkerObj : MonoBehaviour
         socketObj = GameObject.Find("NetworkManager(Clone)").GetComponent<SocketObj>();
         clientSender = socketObj.socketClient;
         socketObj.OnDataInvoke += SocketObj_OnDataInvoke;
-        StartCoroutine(SendData());
+        StartCoroutine(SendInitData());
     }
 
     private void SocketObj_OnDataInvoke(BasePacket basePacket)
@@ -48,7 +50,7 @@ public class SocketLinkerObj : MonoBehaviour
             case PacketType.CamReceived:
                 if (SendCamTexture == true)
                 {
-                    StartCoroutine(SendCamFrame());
+                    SendCamData();
                 }
                 break;
 
@@ -64,9 +66,7 @@ public class SocketLinkerObj : MonoBehaviour
                         if (ccp.enable)
                         {
                             SendCamTexture = true;
-                            texture2D = TextureToTexture2D(camManager.background.texture);
-                            clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
-                            Destroy(texture2D);
+                            SendCamData();
                         }
                         else
                             SendCamTexture = false;
@@ -82,41 +82,43 @@ public class SocketLinkerObj : MonoBehaviour
                 {
                     CarStatusChangeReqPacket cscrp = (CarStatusChangeReqPacket)basePacket;
 
-                    switch (cscrp.carMember)
-                    {
-                        case CarMember.r_motorpower:
-                            baseCarDivice.r_motorpower = cscrp.bytevalue;
-                            break;
-                        case CarMember.l_motorpower:
-                            baseCarDivice.l_motorpower = cscrp.bytevalue;
-                            break;
-                        case CarMember.r_motorDIR:
-                            baseCarDivice.r_motorDIR = cscrp.boolvalue;
-                            break;
-                        case CarMember.l_motorDIR:
-                            baseCarDivice.l_motorDIR = cscrp.boolvalue;
-                            break;
-                        case CarMember.rf_LED:
-                            baseCarDivice.rf_LED = cscrp.boolvalue;
-                            break;
-                        case CarMember.lf_LED:
-                            baseCarDivice.lf_LED = cscrp.boolvalue;
-                            break;
-                        case CarMember.rb_LED:
-                            baseCarDivice.rb_LED = cscrp.boolvalue;
-                            break;
-                        case CarMember.lb_LED:
-                            baseCarDivice.lb_LED = cscrp.boolvalue;
-                            break;
-                        default:
-                            break;
-                    }
+                    if (cscrp.Cardevice.R_motorDIR != baseCarDivice.r_motorDIR)
+                        baseCarDivice.r_motorDIR = cscrp.Cardevice.R_motorDIR;
+
+                    if (cscrp.Cardevice.L_motorDIR != baseCarDivice.l_motorDIR)
+                        baseCarDivice.l_motorDIR = cscrp.Cardevice.L_motorDIR;
+
+                    if (cscrp.Cardevice.R_motorpower != baseCarDivice.r_motorpower)
+                        baseCarDivice.r_motorpower = cscrp.Cardevice.R_motorpower;
+
+                    if (cscrp.Cardevice.L_motorpower != baseCarDivice.l_motorpower)
+                        baseCarDivice.l_motorpower = cscrp.Cardevice.L_motorpower;
+
+                    if (cscrp.Cardevice.RF_LED != baseCarDivice.rf_LED)
+                        baseCarDivice.rf_LED = cscrp.Cardevice.RF_LED;
+
+                    if (cscrp.Cardevice.LF_LED != baseCarDivice.lf_LED)
+                        baseCarDivice.lf_LED = cscrp.Cardevice.LF_LED;
+
+                    if (cscrp.Cardevice.RB_LED != baseCarDivice.rb_LED)
+                        baseCarDivice.rb_LED = cscrp.Cardevice.RB_LED;
+
+                    if (cscrp.Cardevice.LB_LED != baseCarDivice.lb_LED)
+                        baseCarDivice.lb_LED = cscrp.Cardevice.LB_LED;
+                }
+                break;
+
+            case PacketType.CarStatusReceived:
+                if(SendCarStatus == true)
+                {
+                    StartCoroutine(SendCarDataWithDelay());
                 }
                 break;
 
             case PacketType.CarGPSSpotStatusChangeReq:
                 CarGPSSpotStatusChangeReqPacket cgscrp = (CarGPSSpotStatusChangeReqPacket)basePacket;
                 tracerObj.gPSMover.ChangeSpot(cgscrp.gPSMover);
+                clientSender.SendPacket(new CarGPSStatusUpdatedPacket());
                 break;
 
             case PacketType.UpdateDataReq:
@@ -126,12 +128,15 @@ public class SocketLinkerObj : MonoBehaviour
                 {
                     case ModeType.AutoDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = true;
+                        baseCarDivice.HalfManualMode = false;
                         break;
                     case ModeType.ManualDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = false;
+                        baseCarDivice.HalfManualMode = false;
                         break;
                     case ModeType.HaifManualDriveMode:
-                        tracerObj.gPSMover.EnableTraceMode = false;//드라이브 자동보정 기능 넣어야됨
+                        tracerObj.gPSMover.EnableTraceMode = false;
+                        baseCarDivice.HalfManualMode = true;
                         break;
                     default:
                         break;
@@ -139,35 +144,38 @@ public class SocketLinkerObj : MonoBehaviour
                 clientSender.SendPacket(new DataUpdatedPacket(dup.modeType));
                 break;
 
-            //case PacketType.UniversalCommand:
-               // break;
+            case PacketType.UniversalCommand:
+                UniversalCommandPacket ucp = (UniversalCommandPacket)basePacket;
+                if(ucp.keyType == KeyType.Command)
+                {
+                }
+                break;
 
             default:
                 break;
         }
     }
 
-    private IEnumerator SendCamFrame()
+    private IEnumerator SendInitData()
     {
-        yield return new WaitForSeconds(0.05f);
+        yield return new WaitForSeconds(0.5f);
+        clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));
+        clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
+
+        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
+    }
+
+    private void SendCamData()
+    {
         texture2D = TextureToTexture2D(camManager.background.texture);
         clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
         Destroy(texture2D);
     }
 
-    private IEnumerator SendData()
+    private IEnumerator SendCarDataWithDelay()
     {
         yield return new WaitForSeconds(0.5f);
-        texture2D = TextureToTexture2D(camManager.background.texture);////////////////////////////////////////////////////////////////////////////////////////
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));////////////////////////////////////////////////////////////////////////////////////
-        Destroy(texture2D);///////////////////////////////////////////////
-        clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));//미완
-        clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
-        while (false)
-        {
-            yield return new WaitForSeconds(2f);
-            clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
-        }
+        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
     }
 
     private Texture2D TextureToTexture2D(Texture texture)

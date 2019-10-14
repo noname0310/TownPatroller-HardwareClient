@@ -63,6 +63,7 @@ namespace TownPatroller.Bluetooth
             yield return new WaitForSeconds(0.05f);
 
             PacketBuffer.Append(']');
+            //IGConsole.Instance.Main.println(PacketBuffer.ToString());
             bTCore.SendMsg(PacketBuffer.ToString());
 
             PacketBuffer.Clear();
