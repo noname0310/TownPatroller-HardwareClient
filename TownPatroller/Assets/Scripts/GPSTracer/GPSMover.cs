@@ -25,6 +25,9 @@ namespace TownPatroller.GPSTracer
         Direction RotateDirection;
         Direction TraceDraction;
 
+        bool LBlocked;
+        bool RBlocked;
+
         public void _new(BaseCarDivice baseCarDivice)
         {
             gPSSpotManager = new GPSSpotManager(0);
@@ -201,7 +204,10 @@ namespace TownPatroller.GPSTracer
                                             CurrentMoveSequence = MoveSequence.ForcedForward;
                                             goto case MoveSequence.ForcedForward;
                                         }
-
+                                        else
+                                        {
+                                            //goto 2-2
+                                        }
                                     }
                                     else//왼쪽에 ReqAngleFromN존재
                                     {
@@ -209,6 +215,10 @@ namespace TownPatroller.GPSTracer
                                         {
                                             CurrentMoveSequence = MoveSequence.ForcedForward;
                                             goto case MoveSequence.ForcedForward;
+                                        }
+                                        else
+                                        {
+                                            //goto 2-2
                                         }
                                     }
                                 }
@@ -221,6 +231,10 @@ namespace TownPatroller.GPSTracer
                                             CurrentMoveSequence = MoveSequence.ForcedForward;
                                             goto case MoveSequence.ForcedForward;
                                         }
+                                        else
+                                        {
+                                            //goto 2-2
+                                        }
                                     }
                                     else//오른쪽에 ReqAngleFromN존재
                                     {
@@ -228,6 +242,10 @@ namespace TownPatroller.GPSTracer
                                         {
                                             CurrentMoveSequence = MoveSequence.ForcedForward;
                                             goto case MoveSequence.ForcedForward;
+                                        }
+                                        else
+                                        {
+                                            //goto 2-2
                                         }
                                     }
                                 }
@@ -261,9 +279,40 @@ namespace TownPatroller.GPSTracer
                         break;
 
                     case MoveSequence.AngleMeasure:
+                        if (SetDistanceCount < 5)
+                        {
+                            SetDistanceCount++;
+                            MoveToFrontPerpendicularAngle();
+                        }
+                        else
+                        {
+                            if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
+                            {
+                                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//오른쪽에 ReqAngleFromN존재
+                                {
+                                    
+                                }
+                                else//왼쪽에 ReqAngleFromN존재
+                                {
+                                    
+                                }
+                            }
+                            else
+                            {
+                                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//왼쪽에 ReqAngleFromN존재
+                                {
+                                    
+                                }
+                                else//오른쪽에 ReqAngleFromN존재
+                                {
+                                    
+                                }
+                            }
+                        }
                         break;
 
                     case MoveSequence.ProgressiveLengthMeasure:
+                        
                         break;
 
                     case MoveSequence.RetractionMeasure:
