@@ -19,14 +19,24 @@ namespace TownPatroller.GPSTracer
 
         MoveSequence CurrentMoveSequence;
         SemiAutomaticSubSequence SemiAutomaticSubSequence;
+        ProgressiveLengthMeasureSubSequence ProgressiveLengthMeasureSubSequence;
         ushort ShortestDistance;
         bool PrevChangeValue;
         int SetDistanceCount;
         Direction RotateDirection;
         Direction TraceDraction;
 
+        bool rotationSaved;
+        float reqrotation;
+
         bool LBlocked;
         bool RBlocked;
+        int CurrentMoveFrontCount;
+        int MoveFrontTickCount;
+
+        bool TurnBack;
+
+        float BetweenAngle;
 
         public void _new(BaseCarDivice baseCarDivice)
         {
@@ -36,7 +46,7 @@ namespace TownPatroller.GPSTracer
             CurrentMoveSequence = MoveSequence.ForcedForward;
 
             carDivice.statusparser.OnParsedSOP += Statusparser_OnParsedSOP;
-            gPSSpotManager.AddPos(new GPSPosition(null, 100, 100));
+            gPSSpotManager.AddPos(new GPSPosition(null, -100, 100));
             gPSSpotManager.AddPos(new GPSPosition(null, 1221, 312));
         }
 
@@ -44,6 +54,7 @@ namespace TownPatroller.GPSTracer
         {
             if (EnableTraceMode && gPSSpotManager.GPSPositions.Count > 1)
             {
+                IGConsole.Instance.Main.println(CurrentMoveSequence.ToString());
                 //CompassCore.Instance.AngleFromN
                 GPSsPosition MyPos = new GPSsPosition(0, 0);//GPSCore.Instance.GetGPSPosition().GetGPSS();
                 GPSsPosition TargetPos = gPSSpotManager.GPSPositions[gPSSpotManager.CurrentMovePosIndex].GetGPSS();
@@ -64,6 +75,7 @@ namespace TownPatroller.GPSTracer
                 switch (CurrentMoveSequence)
                 {
                     case MoveSequence.ForcedForward:
+                        #region 1-1
                         if (RotateToReqAngle(ReqAngleFromN) == false)
                         {
                             if (carDivice.rh_sonardist > 10 && carDivice.lh_sonardist > 10)
@@ -115,8 +127,10 @@ namespace TownPatroller.GPSTracer
                             }
                         }
                         break;
+                    #endregion
 
                     case MoveSequence.SemiAutomaticForward:
+                        #region 1-2
                         if (SemiAutomaticSubSequence == SemiAutomaticSubSequence.GetTraceDractionAngle)
                         {
                             if (SetDistanceCount < 5)
@@ -126,200 +140,321 @@ namespace TownPatroller.GPSTracer
                             }
                             else
                             {
-                                if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
-                                {
-                                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//오른쪽에 ReqAngleFromN존재
-                                    {
-                                        if (TraceDraction == Direction.Left)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                            goto case MoveSequence.SemiAutomaticForward;
-                                        }
+                                Direction rotatedirection = GetRotateTargetDerection(ReqAngleFromN);
 
-                                    }
-                                    else//왼쪽에 ReqAngleFromN존재
-                                    {
-                                        if (TraceDraction == Direction.Right)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                            goto case MoveSequence.SemiAutomaticForward;
-                                        }
-                                    }
-                                }
-                                else
+                                if (rotatedirection == Direction.Right)
                                 {
-                                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//왼쪽에 ReqAngleFromN존재
+                                    if (TraceDraction == Direction.Left)
                                     {
-                                        if (TraceDraction == Direction.Right)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                            goto case MoveSequence.SemiAutomaticForward;
-                                        }
+                                        CurrentMoveSequence = MoveSequence.ForcedForward;
+                                        goto case MoveSequence.ForcedForward;
                                     }
-                                    else//오른쪽에 ReqAngleFromN존재
+                                    else
                                     {
-                                        if (TraceDraction == Direction.Left)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                            goto case MoveSequence.SemiAutomaticForward;
-                                        }
+                                        SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
+                                        goto case MoveSequence.SemiAutomaticForward;
+                                    }
+
+                                }
+                                else//왼쪽에 ReqAngleFromN존재
+                                {
+                                    if (TraceDraction == Direction.Right)
+                                    {
+                                        CurrentMoveSequence = MoveSequence.ForcedForward;
+                                        goto case MoveSequence.ForcedForward;
+                                    }
+                                    else
+                                    {
+                                        SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
+                                        goto case MoveSequence.SemiAutomaticForward;
                                     }
                                 }
                             }
                         }
                         else if (SemiAutomaticSubSequence == SemiAutomaticSubSequence.TraceWall)
                         {
-                            float BtweenAngle = Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN);
-                            if (BtweenAngle > 180)
-                                BtweenAngle = 360 - BtweenAngle;
+                            BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
 
-                            if (BtweenAngle > 60)
+                            if (BetweenAngle > 80)
                             {
-                                if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
+                                Direction direction = GetRotateTargetDerection(ReqAngleFromN);
+
+                                if (direction == Direction.Right)
                                 {
-                                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//오른쪽에 ReqAngleFromN존재
+                                    if (TraceDraction == Direction.Left)
                                     {
-                                        if (TraceDraction == Direction.Left)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            //goto 2-2
-                                        }
+                                        CurrentMoveSequence = MoveSequence.ForcedForward;
+                                        goto case MoveSequence.ForcedForward;
                                     }
-                                    else//왼쪽에 ReqAngleFromN존재
+                                    else
                                     {
-                                        if (TraceDraction == Direction.Right)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            //goto 2-2
-                                        }
+                                        RBlocked = true;
+                                        LBlocked = false;
+
+                                        MoveFrontTickCount = 10;
+                                        CurrentMoveFrontCount = 0;
+                                        //TraceDraction = TraceDraction;
+
+                                        CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                        goto case MoveSequence.ProgressiveLengthMeasure;
                                     }
                                 }
-                                else
+                                else//왼쪽에 ReqAngleFromN존재
                                 {
-                                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//왼쪽에 ReqAngleFromN존재
+                                    if (TraceDraction == Direction.Right)
                                     {
-                                        if (TraceDraction == Direction.Right)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            //goto 2-2
-                                        }
+                                        CurrentMoveSequence = MoveSequence.ForcedForward;
+                                        goto case MoveSequence.ForcedForward;
                                     }
-                                    else//오른쪽에 ReqAngleFromN존재
+                                    else
                                     {
-                                        if (TraceDraction == Direction.Left)
-                                        {
-                                            CurrentMoveSequence = MoveSequence.ForcedForward;
-                                            goto case MoveSequence.ForcedForward;
-                                        }
-                                        else
-                                        {
-                                            //goto 2-2
-                                        }
+                                        RBlocked = false;
+                                        LBlocked = true;
+
+                                        MoveFrontTickCount = 10;
+                                        CurrentMoveFrontCount = 0;
+                                        //TraceDraction = TraceDraction;
+
+                                        CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                        goto case MoveSequence.ProgressiveLengthMeasure;
                                     }
                                 }
                             }
                             else
                             {
-                                if (TraceDraction == Direction.Left)
-                                {
-                                    if (carDivice.ls_sonardist > 20)
-                                    {
-                                        MoveFront(255, 150);
-                                    }
-                                    else
-                                    {
-                                        MoveFront(255);
-                                    }
-                                }
-                                else
-                                {
-                                    if (carDivice.rs_sonardist > 20)
-                                    {
-                                        MoveFront(150, 255);
-                                    }
-                                    else
-                                    {
-                                        MoveFront(255);
-                                    }
-                                }
+                                DriveWall(TraceDraction);
                             }
                         }
                         break;
+                    #endregion
 
                     case MoveSequence.AngleMeasure:
+                        #region 2-1
                         if (SetDistanceCount < 5)
                         {
                             SetDistanceCount++;
                             MoveToFrontPerpendicularAngle();
+                            rotationSaved = false;
                         }
                         else
                         {
-                            if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
+                            if (rotationSaved == false)//reqrotation 설정
                             {
-                                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//오른쪽에 ReqAngleFromN존재
+                                rotationSaved = true;
+                                Direction direction = GetRotateTargetDerection(reqrotation);
+
+                                if (direction == Direction.Right)
                                 {
-                                    
+                                    reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
+                                    TraceDraction = Direction.Left;
                                 }
                                 else//왼쪽에 ReqAngleFromN존재
                                 {
-                                    
+                                    reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                    TraceDraction = Direction.Right;
                                 }
                             }
                             else
                             {
-                                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)//왼쪽에 ReqAngleFromN존재
+                                if (RotateToReqAngle(reqrotation) == false)
                                 {
-                                    
-                                }
-                                else//오른쪽에 ReqAngleFromN존재
-                                {
-                                    
+                                    RBlocked = false;
+                                    LBlocked = false;
+
+                                    MoveFrontTickCount = 10;
+                                    CurrentMoveFrontCount = 0;
+                                    //TraceDraction = TraceDraction;
+
+                                    CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                    ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                    goto case MoveSequence.ProgressiveLengthMeasure;
                                 }
                             }
                         }
                         break;
+                    #endregion
 
                     case MoveSequence.ProgressiveLengthMeasure:
-                        
+                        #region 2-2
+                        BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
+
+                        if (BetweenAngle > 120 && ProgressiveLengthMeasureSubSequence != ProgressiveLengthMeasureSubSequence.Rotate180)
+                        {
+                            //TraceDraction = TraceDraction;
+                            TurnBack = false; 
+                            CurrentMoveSequence = MoveSequence.RetractionMeasure;
+                            goto case MoveSequence.RetractionMeasure;
+                        }
+                        else if (BetweenAngle < 70 && ProgressiveLengthMeasureSubSequence != ProgressiveLengthMeasureSubSequence.Rotate180)
+                        {
+                            //TraceDraction = TraceDraction;
+                            ShortestDistance = 20;
+                            RotateDirection = Direction.Right;
+                            SetDistanceCount = 0;
+                            PrevChangeValue = false;
+                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.GetTraceDractionAngle;
+                            CurrentMoveSequence = MoveSequence.SemiAutomaticForward;
+                            goto case MoveSequence.SemiAutomaticForward;
+                        }
+                        else
+                        {
+                            switch (ProgressiveLengthMeasureSubSequence)
+                            {
+                                case ProgressiveLengthMeasureSubSequence.Front:
+                                    if (carDivice.f_sonardist > 20)
+                                    {
+                                        if (TraceDraction == Direction.Right)
+                                        {
+                                            LBlocked = true;
+                                            if (!RBlocked)
+                                            {
+                                                rotationSaved = false;
+                                                ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate180;
+                                                goto case ProgressiveLengthMeasureSubSequence.Rotate180;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            RBlocked = true;
+                                            if (!LBlocked)
+                                            {
+                                                rotationSaved = false;
+                                                ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate180;
+                                                goto case ProgressiveLengthMeasureSubSequence.Rotate180;
+                                            }
+                                        }
+                                        if (LBlocked && RBlocked)
+                                        {
+                                            ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate90;
+                                            goto case ProgressiveLengthMeasureSubSequence.Rotate90;
+                                        }
+                                    }
+                                    if (MoveFrontTickCount == CurrentMoveFrontCount)
+                                    {
+                                        rotationSaved = false;
+                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate180;
+                                        goto case ProgressiveLengthMeasureSubSequence.Rotate180;
+                                    }
+                                    else
+                                    {
+                                        CurrentMoveFrontCount++;
+                                        DriveWall(TraceDraction);
+                                    }
+                                    break;
+
+                                case ProgressiveLengthMeasureSubSequence.Rotate180:
+                                    if (rotationSaved == false)
+                                    {
+                                        rotationSaved = true;
+                                        reqrotation = (CompassCore.Instance.AngleFromN + 180) % 360;
+                                    }
+                                    else
+                                    {
+                                        if (RotateToReqAngle(reqrotation) == false)
+                                        {
+                                            MoveFrontTickCount *= MoveFrontTickCount;
+                                            CurrentMoveFrontCount = 0;
+                                            TraceDraction = (TraceDraction == Direction.Right) ? Direction.Left : Direction.Right;
+                                            ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                            goto case ProgressiveLengthMeasureSubSequence.Front;
+                                        }
+                                    }
+                                    break;
+
+                                case ProgressiveLengthMeasureSubSequence.Rotate90:
+                                    if (rotationSaved == false)
+                                    {
+                                        rotationSaved = true; 
+                                        
+                                        Direction direction = GetRotateTargetDerection(reqrotation);
+
+                                        if (direction == Direction.Right)
+                                        {
+                                            reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
+                                            TraceDraction = Direction.Left;
+                                        }
+                                        else//왼쪽에 ReqAngleFromN존재
+                                        {
+                                            reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                            TraceDraction = Direction.Right;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (RotateToReqAngle(reqrotation) == false)
+                                        {
+                                            //XXXXXXXXgoto2-3
+                                        }
+                                    }
+                                    break;
+
+                                default:
+                                    break;
+                            }
+                        }
                         break;
+                    #endregion
 
                     case MoveSequence.RetractionMeasure:
+                        #region 2-3
+                        if (TurnBack == false)
+                        {
+                            TurnBack = !RotateToReqAngle((ReqAngleFromN + 180) % 360);
+                        }
+                        else
+                        {
+                            if (carDivice.f_sonardist < 20)
+                            {
+                                MoveFront(0);
+                                //goto 2-4
+                            }
+                            else
+                            {
+                                BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
+                                Direction direction = GetRotateTargetDerection(ReqAngleFromN);
+
+                                if (BetweenAngle < 120)
+                                {
+                                    if (TraceDraction == direction)//바깥쪽으로 나갈때
+                                    {
+                                        if (TraceDraction == Direction.Right)
+                                        {
+                                            RBlocked = true;
+                                            LBlocked = false;
+                                        }
+                                        else
+                                        {
+                                            RBlocked = false;
+                                            LBlocked = true;
+                                        }
+
+                                        MoveFrontTickCount = 10;
+                                        CurrentMoveFrontCount = 0;
+                                        //TraceDraction = TraceDraction;
+
+                                        CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                        goto case MoveSequence.ProgressiveLengthMeasure;
+                                    }
+                                    else//안쪽으로 들어갈때
+                                    {
+                                        MoveFront(0);
+                                        //goto 2-4
+                                    }
+                                }
+                                DriveWall(TraceDraction);
+                            }
+                        }
                         break;
+                    #endregion
 
                     case MoveSequence.Root:
+                        #region 2-4
+
                         break;
+                    #endregion
 
                     default:
                         break;
@@ -330,6 +465,42 @@ namespace TownPatroller.GPSTracer
         public void ChangeSpot(GPSSpotManager gPSSpotManager)
         {
 
+        }
+
+        #region CalcMoveMethods
+
+        private void DriveWall(Direction direction)
+        {
+            if (direction == Direction.Left)
+            {
+                if (carDivice.ls_sonardist > 20)
+                {
+                    MoveFront(255, 150);
+                }
+                else if (carDivice.ls_sonardist < 10)
+                {
+                    MoveFront(150, 255);
+                }
+                else
+                {
+                    MoveFront(255);
+                }
+            }
+            else
+            {
+                if (carDivice.rs_sonardist > 20)
+                {
+                    MoveFront(150, 255);
+                }
+                else if (carDivice.rs_sonardist < 10)
+                {
+                    MoveFront(255, 150);
+                }
+                else
+                {
+                    MoveFront(255);
+                }
+            }
         }
 
         private void MoveToFrontPerpendicularAngle()
@@ -388,39 +559,63 @@ namespace TownPatroller.GPSTracer
 
         private bool RotateToReqAngle(float ReqAngleFromN)
         {
-            float BtweenAngle = Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN);
-            if (BtweenAngle > 180)
-                BtweenAngle = 360 - BtweenAngle;
+            float BtweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
 
             if (BtweenAngle > 10)
             {
-                if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
+                Direction rotatedirection = GetRotateTargetDerection(ReqAngleFromN);
+                if (rotatedirection == Direction.Right)
                 {
-                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
-                    {
-                        RotationR(120);
-                    }
-                    else
-                    {
-                        RotationL(120);
-                    }
+                    RotationR(120);
                 }
                 else
                 {
-                    if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
-                    {
-                        RotationL(120);
-                    }
-                    else
-                    {
-                        RotationR(120);
-                    }
+                    RotationL(120);
                 }
                 return true;
             }
 
             return false;
         }
+
+        private Direction GetRotateTargetDerection(float ReqAngleFromN)
+        {
+            if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
+            {
+                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
+                {
+                    return Direction.Right;
+                }
+                else
+                {
+                    return Direction.Left;
+                }
+            }
+            else
+            {
+                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
+                {
+                    return Direction.Left;
+                }
+                else
+                {
+                    return Direction.Right;
+                }
+            }
+        }
+
+        private float GetBetweenTargetAngle(float ReqAngleFromN)
+        {
+            float BtweenAngle = Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN);
+            if (BtweenAngle > 180)
+                BtweenAngle = 360 - BtweenAngle;
+
+            return BtweenAngle;
+        }
+
+        #endregion
+
+        #region BasicMoveMethods
 
         private void MoveFront(byte power)
         {
@@ -469,6 +664,8 @@ namespace TownPatroller.GPSTracer
             carDivice.l_motorpower = power;
             carDivice.r_motorpower = power;
         }
+
+        #endregion
 
         private float CalcReqAngleFromN(GPSsPosition MyPos, GPSsPosition TargetPos)
         {
@@ -549,6 +746,13 @@ namespace TownPatroller.GPSTracer
     {
         GetTraceDractionAngle,
         TraceWall
+    }
+
+    public enum ProgressiveLengthMeasureSubSequence
+    {
+        Front,
+        Rotate180,
+        Rotate90
     }
 
     public enum Direction

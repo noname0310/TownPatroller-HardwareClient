@@ -6,7 +6,7 @@ public class CompassCore : MonoBehaviour
     public static CompassCore Instance { get; set; }
 
     private bool gyroEnabled;
-    private Gyroscope gyro;
+    private Compass compass;
 
     public GameObject Compass;
     public GameObject CompassUI;
@@ -33,8 +33,9 @@ public class CompassCore : MonoBehaviour
     {
         if (SystemInfo.supportsGyroscope)
         {
-            gyro = Input.gyro;
-            gyro.enabled = false;
+            compass = Input.compass;
+            compass.enabled = false;
+            Input.location.Stop();
         }
     }
 
@@ -50,27 +51,19 @@ public class CompassCore : MonoBehaviour
 
     private bool EnableGyro()
     {
-        if (SystemInfo.supportsGyroscope)
-        {
-            gyro = Input.gyro;
-            gyro.enabled = true;
+        compass = Input.compass;
+        compass.enabled = true;
+        Input.location.Start();
 
-            IGConsole.Instance.Main.println("Gyroscope enabled");
-            return true;
-        }
-        else
-        {
-            IGConsole.Instance.Main.println("This divice not supports gyroscope");
-        }
-
-        return false;
+        IGConsole.Instance.Main.println("Compass enabled");
+        return true;
     }
 
     private void Update()
     {
         if (gyroEnabled)
         {
-            CompassAngle = -gyro.attitude.eulerAngles.z;// + 90;
+            CompassAngle = Input.compass.trueHeading; // -gyro.attitude.eulerAngles.z;// + 90;
             Compass.transform.localRotation = Quaternion.Euler(0f, 0f, CompassAngle);
 
             AngleFromN = -CompassAngle;
