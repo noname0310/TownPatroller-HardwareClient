@@ -40,6 +40,11 @@ public class SocketLinkerObj : MonoBehaviour
         StartCoroutine(SendInitData());
     }
 
+    private void OnDestroy()
+    {
+        socketObj.OnDataInvoke -= SocketObj_OnDataInvoke;
+    }
+
     private void SocketObj_OnDataInvoke(BasePacket basePacket)
     {
         switch (basePacket.packetType)
@@ -162,7 +167,7 @@ public class SocketLinkerObj : MonoBehaviour
         clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));
         clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
 
-        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
+        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
     }
 
     private void SendCamData()
@@ -175,7 +180,7 @@ public class SocketLinkerObj : MonoBehaviour
     private IEnumerator SendCarDataWithDelay()
     {
         yield return new WaitForSeconds(0.5f);
-        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSPosition(), CompassCore.Instance.AngleFromN));
+        clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
     }
 
     private Texture2D TextureToTexture2D(Texture texture)

@@ -139,7 +139,6 @@ namespace TownPatroller.SocketClient
         private void SendData()
         {
             networkStream.Write(SendBuffer, 0, SendBuffer.Length);
-            
             networkStream.Flush();
 
             for (int i = 0; i < SendBuffer.Length; i++)

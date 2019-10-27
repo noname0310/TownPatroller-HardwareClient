@@ -18,12 +18,7 @@ namespace TownPatroller.GPSTracer
         public bool EnableTraceMode { get; set; }
 
         MoveSequence CurrentMoveSequence;
-        SemiAutomaticSubSequence SemiAutomaticSubSequence;
         ProgressiveLengthMeasureSubSequence ProgressiveLengthMeasureSubSequence;
-        ushort ShortestDistance;
-        bool PrevChangeValue;
-        int SetDistanceCount;
-        Direction RotateDirection;
         Direction TraceDraction;
 
         bool rotationSaved;
@@ -46,17 +41,36 @@ namespace TownPatroller.GPSTracer
             CurrentMoveSequence = MoveSequence.ForcedForward;
 
             carDivice.statusparser.OnParsedSOP += Statusparser_OnParsedSOP;
-            gPSSpotManager.AddPos(new GPSPosition(null, -100, 100));
-            gPSSpotManager.AddPos(new GPSPosition(null, 1221, 312));
+            //gPSSpotManager.AddPos(new GPSPosition(null, -100, 100));
+            //gPSSpotManager.AddPos(new GPSPosition(null, 1221, 312));
+        }
+
+        public string GetCurrentPositonName()
+        {
+            if (gPSSpotManager.GPSPositions.Count <= 1)
+                return "N/A";
+            else
+            {
+                if (gPSSpotManager.CurrentMovePosIndex == 1)
+                    return gPSSpotManager.GPSPositions.Last().LocationName;
+                else
+                    return gPSSpotManager.GPSPositions[gPSSpotManager.CurrentMovePosIndex - 1].LocationName;
+            }
         }
 
         private void Statusparser_OnParsedSOP()
         {
-            if (EnableTraceMode && gPSSpotManager.GPSPositions.Count > 1)
+            if (EnableTraceMode)
             {
+                if (gPSSpotManager.GPSPositions.Count == 0)
+                {
+                    MoveFront(0);
+                    return;
+                }
+
                 IGConsole.Instance.Main.println(CurrentMoveSequence.ToString());
-                //CompassCore.Instance.AngleFromN
-                GPSsPosition MyPos = new GPSsPosition(0, 0);//GPSCore.Instance.GetGPSPosition().GetGPSS();
+
+                GPSsPosition MyPos = /*new GPSsPosition(0, 0);//*/GPSCore.Instance.GetGPSsPosition();
                 GPSsPosition TargetPos = gPSSpotManager.GPSPositions[gPSSpotManager.CurrentMovePosIndex].GetGPSS();
 
                 float x = Mathf.Abs(MyPos.longitude - TargetPos.longitude);
@@ -90,34 +104,23 @@ namespace TownPatroller.GPSTracer
                             {
                                 RotationR(255);
                             }
-                            else if (carDivice.f_sonardist < 20)
+                            else if (carDivice.f_sonardist < 30)
                             {
-                                ShortestDistance = 20;
-                                RotateDirection = Direction.Right;
-                                SetDistanceCount = 0;
-                                PrevChangeValue = false;
-                                CurrentMoveSequence = MoveSequence.AngleMeasure;
-                                goto case MoveSequence.AngleMeasure;
+                                RBlocked = false;
+                                LBlocked = false;
+                                rotationSaved = false;
+                                CurrentMoveSequence = MoveSequence.Rotat90To2n2;
+                                goto case MoveSequence.Rotat90To2n2;
                             }
                             else if (carDivice.rs_sonardist < 20)
                             {
                                 TraceDraction = Direction.Right;
-                                ShortestDistance = 20;
-                                RotateDirection = Direction.Right;
-                                SetDistanceCount = 0;
-                                PrevChangeValue = false;
-                                SemiAutomaticSubSequence = SemiAutomaticSubSequence.GetTraceDractionAngle;
                                 CurrentMoveSequence = MoveSequence.SemiAutomaticForward;
                                 goto case MoveSequence.SemiAutomaticForward;
                             }
                             else if (carDivice.ls_sonardist < 20)
                             {
                                 TraceDraction = Direction.Left;
-                                ShortestDistance = 20;
-                                RotateDirection = Direction.Right;
-                                SetDistanceCount = 0;
-                                PrevChangeValue = false;
-                                SemiAutomaticSubSequence = SemiAutomaticSubSequence.GetTraceDractionAngle;
                                 CurrentMoveSequence = MoveSequence.SemiAutomaticForward;
                                 goto case MoveSequence.SemiAutomaticForward;
                             }
@@ -131,119 +134,96 @@ namespace TownPatroller.GPSTracer
 
                     case MoveSequence.SemiAutomaticForward:
                         #region 1-2
-                        if (SemiAutomaticSubSequence == SemiAutomaticSubSequence.GetTraceDractionAngle)
-                        {
-                            if (SetDistanceCount < 5)
-                            {
-                                SetDistanceCount++;
-                                MoveToPerpendicularAngle();
-                            }
-                            else
-                            {
-                                Direction rotatedirection = GetRotateTargetDerection(ReqAngleFromN);
+                        BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
 
-                                if (rotatedirection == Direction.Right)
-                                {
-                                    if (TraceDraction == Direction.Left)
-                                    {
-                                        CurrentMoveSequence = MoveSequence.ForcedForward;
-                                        goto case MoveSequence.ForcedForward;
-                                    }
-                                    else
-                                    {
-                                        SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                        goto case MoveSequence.SemiAutomaticForward;
-                                    }
-
-                                }
-                                else//왼쪽에 ReqAngleFromN존재
-                                {
-                                    if (TraceDraction == Direction.Right)
-                                    {
-                                        CurrentMoveSequence = MoveSequence.ForcedForward;
-                                        goto case MoveSequence.ForcedForward;
-                                    }
-                                    else
-                                    {
-                                        SemiAutomaticSubSequence = SemiAutomaticSubSequence.TraceWall;
-                                        goto case MoveSequence.SemiAutomaticForward;
-                                    }
-                                }
-                            }
-                        }
-                        else if (SemiAutomaticSubSequence == SemiAutomaticSubSequence.TraceWall)
+                        if (BetweenAngle > 60)
                         {
-                            BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
+                            Direction direction = GetRotateTargetDerection(ReqAngleFromN);
+
+                            if (direction == Direction.Right && TraceDraction == Direction.Left)
+                            {
+                                CurrentMoveSequence = MoveSequence.ForcedForward;
+                                goto case MoveSequence.ForcedForward;
+                            }
+                            else if (direction == Direction.Right && TraceDraction == Direction.Right)
+                            {
+                                CurrentMoveSequence = MoveSequence.ForcedForward;
+                                goto case MoveSequence.ForcedForward;
+                            }
 
                             if (BetweenAngle > 80)
                             {
-                                Direction direction = GetRotateTargetDerection(ReqAngleFromN);
-
-                                if (direction == Direction.Right)
+                                if (direction == Direction.Right && TraceDraction == Direction.Right)
                                 {
-                                    if (TraceDraction == Direction.Left)
-                                    {
-                                        CurrentMoveSequence = MoveSequence.ForcedForward;
-                                        goto case MoveSequence.ForcedForward;
-                                    }
-                                    else
-                                    {
-                                        RBlocked = true;
-                                        LBlocked = false;
+                                    RBlocked = true;
+                                    LBlocked = false;
 
-                                        MoveFrontTickCount = 10;
-                                        CurrentMoveFrontCount = 0;
-                                        //TraceDraction = TraceDraction;
+                                    MoveFrontTickCount = 100;
+                                    CurrentMoveFrontCount = 0;
+                                    //TraceDraction = TraceDraction;
 
-                                        CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
-                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
-                                        goto case MoveSequence.ProgressiveLengthMeasure;
-                                    }
+                                    CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                    ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                    goto case MoveSequence.ProgressiveLengthMeasure;
                                 }
-                                else//왼쪽에 ReqAngleFromN존재
+                                else if (direction == Direction.Left && TraceDraction == Direction.Left)
                                 {
-                                    if (TraceDraction == Direction.Right)
-                                    {
-                                        CurrentMoveSequence = MoveSequence.ForcedForward;
-                                        goto case MoveSequence.ForcedForward;
-                                    }
-                                    else
-                                    {
-                                        RBlocked = false;
-                                        LBlocked = true;
+                                    RBlocked = false;
+                                    LBlocked = true;
 
-                                        MoveFrontTickCount = 10;
-                                        CurrentMoveFrontCount = 0;
-                                        //TraceDraction = TraceDraction;
+                                    MoveFrontTickCount = 100;
+                                    CurrentMoveFrontCount = 0;
+                                    //TraceDraction = TraceDraction;
 
-                                        CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
-                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
-                                        goto case MoveSequence.ProgressiveLengthMeasure;
-                                    }
+                                    CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                                    ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                    goto case MoveSequence.ProgressiveLengthMeasure;
                                 }
+                            }
+                        }
+
+                        else if (carDivice.f_sonardist < 30)//////////////////////////
+                        {
+                            if (TraceDraction == Direction.Right)
+                            {
+                                RBlocked = true;
+                                LBlocked = false;
                             }
                             else
                             {
-                                DriveWall(TraceDraction);
+                                RBlocked = false;
+                                LBlocked = true;
                             }
+                            rotationSaved = false;
+                            CurrentMoveSequence = MoveSequence.Rotat90To2n2;
+                            goto case MoveSequence.Rotat90To2n2;
+                        }
+                        else
+                        {
+                            DriveWall(TraceDraction);
                         }
                         break;
                     #endregion
 
-                    case MoveSequence.AngleMeasure:
+                    case MoveSequence.Rotat90To2n2:
                         #region 2-1
-                        if (SetDistanceCount < 5)
+                        if (rotationSaved == false)//reqrotation 설정
                         {
-                            SetDistanceCount++;
-                            MoveToFrontPerpendicularAngle();
-                            rotationSaved = false;
-                        }
-                        else
-                        {
-                            if (rotationSaved == false)//reqrotation 설정
+                            rotationSaved = true;
+
+                            if (RBlocked == true)
                             {
-                                rotationSaved = true;
-                                Direction direction = GetRotateTargetDerection(reqrotation);
+                                reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                TraceDraction = Direction.Right;
+                            }
+                            else if(LBlocked == true)
+                            {
+                                reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
+                                TraceDraction = Direction.Left;
+                            }
+                            else
+                            {
+                                Direction direction = GetRotateTargetDerection(ReqAngleFromN);
 
                                 if (direction == Direction.Right)
                                 {
@@ -256,22 +236,19 @@ namespace TownPatroller.GPSTracer
                                     TraceDraction = Direction.Right;
                                 }
                             }
-                            else
-                            {
-                                if (RotateToReqAngle(reqrotation) == false)
-                                {
-                                    RBlocked = false;
-                                    LBlocked = false;
+                        }
+                        if (RotateToReqAngle(reqrotation) == false)
+                        {
+                            //RBlocked = RBlocked;
+                            //LBlocked = LBlocked;
 
-                                    MoveFrontTickCount = 10;
-                                    CurrentMoveFrontCount = 0;
-                                    //TraceDraction = TraceDraction;
+                            MoveFrontTickCount = 100;
+                            CurrentMoveFrontCount = 0;
+                            //TraceDraction = TraceDraction;
 
-                                    CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
-                                    ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
-                                    goto case MoveSequence.ProgressiveLengthMeasure;
-                                }
-                            }
+                            CurrentMoveSequence = MoveSequence.ProgressiveLengthMeasure;
+                            ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                            goto case MoveSequence.ProgressiveLengthMeasure;
                         }
                         break;
                     #endregion
@@ -280,7 +257,7 @@ namespace TownPatroller.GPSTracer
                         #region 2-2
                         BetweenAngle = GetBetweenTargetAngle(ReqAngleFromN);
 
-                        if (BetweenAngle > 120 && ProgressiveLengthMeasureSubSequence != ProgressiveLengthMeasureSubSequence.Rotate180)
+                        if (BetweenAngle > 130 && ProgressiveLengthMeasureSubSequence != ProgressiveLengthMeasureSubSequence.Rotate180)
                         {
                             //TraceDraction = TraceDraction;
                             TurnBack = false; 
@@ -290,11 +267,6 @@ namespace TownPatroller.GPSTracer
                         else if (BetweenAngle < 70 && ProgressiveLengthMeasureSubSequence != ProgressiveLengthMeasureSubSequence.Rotate180)
                         {
                             //TraceDraction = TraceDraction;
-                            ShortestDistance = 20;
-                            RotateDirection = Direction.Right;
-                            SetDistanceCount = 0;
-                            PrevChangeValue = false;
-                            SemiAutomaticSubSequence = SemiAutomaticSubSequence.GetTraceDractionAngle;
                             CurrentMoveSequence = MoveSequence.SemiAutomaticForward;
                             goto case MoveSequence.SemiAutomaticForward;
                         }
@@ -303,7 +275,7 @@ namespace TownPatroller.GPSTracer
                             switch (ProgressiveLengthMeasureSubSequence)
                             {
                                 case ProgressiveLengthMeasureSubSequence.Front:
-                                    if (carDivice.f_sonardist > 20)
+                                    if (carDivice.f_sonardist < 30)
                                     {
                                         if (TraceDraction == Direction.Right)
                                         {
@@ -327,11 +299,12 @@ namespace TownPatroller.GPSTracer
                                         }
                                         if (LBlocked && RBlocked)
                                         {
+                                            rotationSaved = false;
                                             ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate90;
                                             goto case ProgressiveLengthMeasureSubSequence.Rotate90;
                                         }
                                     }
-                                    if (MoveFrontTickCount == CurrentMoveFrontCount)
+                                    else if (MoveFrontTickCount == CurrentMoveFrontCount)
                                     {
                                         rotationSaved = false;
                                         ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Rotate180;
@@ -368,25 +341,18 @@ namespace TownPatroller.GPSTracer
                                     {
                                         rotationSaved = true; 
                                         
-                                        Direction direction = GetRotateTargetDerection(reqrotation);
-
-                                        if (direction == Direction.Right)
+                                        if (TraceDraction == Direction.Left)
                                         {
                                             reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
-                                            TraceDraction = Direction.Left;
                                         }
                                         else//왼쪽에 ReqAngleFromN존재
                                         {
                                             reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
-                                            TraceDraction = Direction.Right;
                                         }
                                     }
-                                    else
+                                    if (RotateToReqAngle(reqrotation) == false)
                                     {
-                                        if (RotateToReqAngle(reqrotation) == false)
-                                        {
-                                            //XXXXXXXXgoto2-3
-                                        }
+                                        //XXXXXXXXgoto2-3
                                     }
                                     break;
 
@@ -405,9 +371,10 @@ namespace TownPatroller.GPSTracer
                         }
                         else
                         {
-                            if (carDivice.f_sonardist < 20)
+                            if (carDivice.f_sonardist < 30)
                             {
-                                MoveFront(0);
+                                CurrentMoveSequence = MoveSequence.ForcedForward;
+                                goto case MoveSequence.ForcedForward;
                                 //goto 2-4
                             }
                             else
@@ -430,7 +397,7 @@ namespace TownPatroller.GPSTracer
                                             LBlocked = true;
                                         }
 
-                                        MoveFrontTickCount = 10;
+                                        MoveFrontTickCount = 100;
                                         CurrentMoveFrontCount = 0;
                                         //TraceDraction = TraceDraction;
 
@@ -440,7 +407,8 @@ namespace TownPatroller.GPSTracer
                                     }
                                     else//안쪽으로 들어갈때
                                     {
-                                        MoveFront(0);
+                                        CurrentMoveSequence = MoveSequence.ForcedForward;
+                                        goto case MoveSequence.ForcedForward;
                                         //goto 2-4
                                     }
                                 }
@@ -473,87 +441,37 @@ namespace TownPatroller.GPSTracer
         {
             if (direction == Direction.Left)
             {
-                if (carDivice.ls_sonardist > 20)
-                {
+                if (45 < carDivice.ls_sonardist)
+                    MoveFront(90, 255);
+                else if (40 < carDivice.ls_sonardist)
+                    MoveFront(100, 255);
+                else if (35 < carDivice.ls_sonardist)
+                    MoveFront(100, 255);
+                else if (carDivice.ls_sonardist < 15)
+                    MoveFront(255, 50);
+                else if (carDivice.ls_sonardist < 20)
+                    MoveFront(255, 70);
+                else if (carDivice.ls_sonardist < 30)
                     MoveFront(255, 150);
-                }
-                else if (carDivice.ls_sonardist < 10)
-                {
-                    MoveFront(150, 255);
-                }
                 else
-                {
                     MoveFront(255);
-                }
             }
             else
             {
-                if (carDivice.rs_sonardist > 20)
-                {
-                    MoveFront(150, 255);
-                }
-                else if (carDivice.rs_sonardist < 10)
-                {
+                if (45 < carDivice.rs_sonardist)
+                    MoveFront(255, 90);
+                else if (40 < carDivice.rs_sonardist)
+                    MoveFront(255, 100);
+                else if (35 < carDivice.rs_sonardist)
                     MoveFront(255, 150);
-                }
+                else if (carDivice.rs_sonardist < 15)
+                    MoveFront(50, 255);
+                else if (carDivice.rs_sonardist < 20)
+                    MoveFront(70, 255);
+                else if (carDivice.rs_sonardist < 30)
+                    MoveFront(150, 255);
                 else
-                {
                     MoveFront(255);
-                }
-            }
-        }
-
-        private void MoveToFrontPerpendicularAngle()
-        {
-            if (PrevChangeValue)
-            {
-                if (ShortestDistance < carDivice.f_sonardist)
-                {
-                    RotateDirection = (RotateDirection == Direction.Right) ? Direction.Left : Direction.Right;
-                }
-            }
-
-            if (RotateDirection == Direction.Right)
-                RotationR(90);
-            else
-                RotationL(90);
-            PrevChangeValue = true;
-        }
-
-        private void MoveToPerpendicularAngle()
-        {
-            if(TraceDraction == Direction.Left)
-            {
-                if (PrevChangeValue)
-                {
-                    if (ShortestDistance < carDivice.ls_sonardist)
-                    {
-                        RotateDirection = (RotateDirection == Direction.Right) ? Direction.Left : Direction.Right;
-                    }
-                }
-
-                if (RotateDirection == Direction.Right)
-                    RotationR(90);
-                else
-                    RotationL(90);
-                PrevChangeValue = true;
-            }
-
-            else if(TraceDraction == Direction.Right)
-            {
-                if (PrevChangeValue)
-                {
-                    if (ShortestDistance < carDivice.rs_sonardist)
-                    {
-                        RotateDirection = (RotateDirection == Direction.Right) ? Direction.Left : Direction.Right;
-                    }
-                }
-
-                if (RotateDirection == Direction.Right)
-                    RotationR(90);
-                else
-                    RotationL(90);
-                PrevChangeValue = true;
             }
         }
 
@@ -736,16 +654,10 @@ namespace TownPatroller.GPSTracer
     {
         ForcedForward,//1-1
         SemiAutomaticForward,//1-2
-        AngleMeasure,//2-1
+        Rotat90To2n2,
         ProgressiveLengthMeasure,//2-2
         RetractionMeasure,//2-3
         Root//2-4
-    }
-
-    public enum SemiAutomaticSubSequence
-    {
-        GetTraceDractionAngle,
-        TraceWall
     }
 
     public enum ProgressiveLengthMeasureSubSequence

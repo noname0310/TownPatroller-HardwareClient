@@ -23,6 +23,11 @@ namespace TownPatroller.PhoneDevice.GPS
             return new GPSPosition("N/A", latitude, longitude);
         }
 
+        public GPSPosition GetGPSPosition(string Location)
+        {
+            return new GPSPosition(Location, latitude, longitude);
+        }
+
         public static GPSsPosition operator +(GPSsPosition p1, GPSsPosition p2)
         {
             return new GPSsPosition(p1.latitude + p2.latitude, p1.longitude + p2.longitude);

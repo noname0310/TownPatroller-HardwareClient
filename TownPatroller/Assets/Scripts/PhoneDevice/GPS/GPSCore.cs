@@ -22,9 +22,9 @@ public class GPSCore : MonoBehaviour
         }
     }
 
-    public GPSPosition GetGPSPosition()
+    public GPSsPosition GetGPSsPosition()
     {
-        return new GPSsPosition(Input.location.lastData.latitude, Input.location.lastData.longitude).GetGPSPosition();
+        return new GPSsPosition(Input.location.lastData.latitude, Input.location.lastData.longitude);
     }
 
     private void Start()

@@ -13,6 +13,6 @@ public class TestHelper : MonoBehaviour
     {
         IP.text = "127.0.0.1";
         Port.text = "20310";
-        ID.text = "245135";
+        ID.text = "242135";
     }
 }
