@@ -87,29 +87,29 @@ public class SocketLinkerObj : MonoBehaviour
                 {
                     CarStatusChangeReqPacket cscrp = (CarStatusChangeReqPacket)basePacket;
 
-                    if (cscrp.Cardevice.R_motorDIR != baseCarDivice.r_motorDIR)
-                        baseCarDivice.r_motorDIR = cscrp.Cardevice.R_motorDIR;
+                    if (cscrp.ReqCarDevice.R_motorDIRChanged)
+                        baseCarDivice.r_motorDIR = cscrp.ReqCarDevice.R_motorDIR;
 
-                    if (cscrp.Cardevice.L_motorDIR != baseCarDivice.l_motorDIR)
-                        baseCarDivice.l_motorDIR = cscrp.Cardevice.L_motorDIR;
+                    if (cscrp.ReqCarDevice.L_motorDIRChanged)
+                        baseCarDivice.l_motorDIR = cscrp.ReqCarDevice.L_motorDIR;
 
-                    if (cscrp.Cardevice.R_motorpower != baseCarDivice.r_motorpower)
-                        baseCarDivice.r_motorpower = cscrp.Cardevice.R_motorpower;
+                    if (cscrp.ReqCarDevice.R_motorpowerChanged)
+                        baseCarDivice.r_motorpower = cscrp.ReqCarDevice.R_motorpower;
 
-                    if (cscrp.Cardevice.L_motorpower != baseCarDivice.l_motorpower)
-                        baseCarDivice.l_motorpower = cscrp.Cardevice.L_motorpower;
+                    if (cscrp.ReqCarDevice.L_motorpowerChanged)
+                        baseCarDivice.l_motorpower = cscrp.ReqCarDevice.L_motorpower;
 
-                    if (cscrp.Cardevice.RF_LED != baseCarDivice.rf_LED)
-                        baseCarDivice.rf_LED = cscrp.Cardevice.RF_LED;
+                    if (cscrp.ReqCarDevice.RF_LEDChanged)
+                        baseCarDivice.rf_LED = cscrp.ReqCarDevice.RF_LED;
 
-                    if (cscrp.Cardevice.LF_LED != baseCarDivice.lf_LED)
-                        baseCarDivice.lf_LED = cscrp.Cardevice.LF_LED;
+                    if (cscrp.ReqCarDevice.LF_LEDChanged)
+                        baseCarDivice.lf_LED = cscrp.ReqCarDevice.LF_LED;
 
-                    if (cscrp.Cardevice.RB_LED != baseCarDivice.rb_LED)
-                        baseCarDivice.rb_LED = cscrp.Cardevice.RB_LED;
+                    if (cscrp.ReqCarDevice.RB_LEDChanged)
+                        baseCarDivice.rb_LED = cscrp.ReqCarDevice.RB_LED;
 
-                    if (cscrp.Cardevice.LB_LED != baseCarDivice.lb_LED)
-                        baseCarDivice.lb_LED = cscrp.Cardevice.LB_LED;
+                    if (cscrp.ReqCarDevice.LB_LEDChanged)
+                        baseCarDivice.lb_LED = cscrp.ReqCarDevice.LB_LED;
                 }
                 break;
 
@@ -134,14 +134,17 @@ public class SocketLinkerObj : MonoBehaviour
                     case ModeType.AutoDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = true;
                         baseCarDivice.HalfManualMode = false;
+                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.AutoDriveMode));
                         break;
                     case ModeType.ManualDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = false;
                         baseCarDivice.HalfManualMode = false;
+                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));
                         break;
                     case ModeType.HaifManualDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = false;
                         baseCarDivice.HalfManualMode = true;
+                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.HaifManualDriveMode));
                         break;
                     default:
                         break;
@@ -164,7 +167,7 @@ public class SocketLinkerObj : MonoBehaviour
     private IEnumerator SendInitData()
     {
         yield return new WaitForSeconds(0.5f);
-        clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));
+        clientSender.SendPacket(new DataUpdatedPacket(ModeType.AutoDriveMode));
         clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
 
         clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
@@ -172,6 +175,16 @@ public class SocketLinkerObj : MonoBehaviour
 
     private void SendCamData()
     {
+        StartCoroutine(SendCamDataWithDelay());
+        return;
+        texture2D = TextureToTexture2D(camManager.background.texture);
+        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
+        Destroy(texture2D);
+
+    }
+    private IEnumerator SendCamDataWithDelay()
+    {
+        yield return new WaitForSeconds(0.2f);
         texture2D = TextureToTexture2D(camManager.background.texture);
         clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
         Destroy(texture2D);

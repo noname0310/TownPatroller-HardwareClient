@@ -35,7 +35,8 @@ namespace TownPatroller.Bluetooth
 
         public void CommandEnqueue(string cmd)
         {
-            PacketBuffer.Append(cmd);
+            if (bTCore.bluetoothHelper.isConnected())
+                PacketBuffer.Append(cmd);
         }
 
         private void CommandDequeue()

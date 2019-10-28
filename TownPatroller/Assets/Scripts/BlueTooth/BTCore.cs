@@ -11,7 +11,7 @@ public class BTCore : MonoBehaviour
 {
     public GameObject objectCarDevice;
 
-    BluetoothHelper bluetoothHelper;
+    public BluetoothHelper bluetoothHelper;
     string deviceName;
 
     public Text Middletext;

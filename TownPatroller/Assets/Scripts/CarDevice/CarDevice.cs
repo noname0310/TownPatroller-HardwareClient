@@ -1,9 +1,5 @@
-﻿using System;
-using TPPacket.Class;
-
-namespace TownPatroller.CarDevice
+﻿namespace TownPatroller.CarDevice
 {
-    [Serializable]
     public class Cardevice
     {
         public ushort f_sonardist { get { return F_sonardist; } }
