@@ -34,6 +34,8 @@ namespace TownPatroller.SocketClient
             ReadBuffer = new byte[SegmentSize];
             SendBuffer = new byte[SegmentSize];
             packetSerializer = new PacketSerializer(724, SegmentSize);
+
+            StopTask = true;
         }
 
         public bool Connect(string ip, string port)
@@ -75,8 +77,11 @@ namespace TownPatroller.SocketClient
 
         public void Stop()
         {
-            StopTask = true;
-            PrintlnIGConsole("Disconnected from server");
+            if (StopTask == false)
+            {
+                StopTask = true;
+                PrintlnIGConsole("Disconnected from server");
+            }
         }
 
         private void InitSocket()

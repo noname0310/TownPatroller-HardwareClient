@@ -27,6 +27,8 @@ public class CompassCore : MonoBehaviour
         RotText.text = CarStatusNum0TO360[0];
 
         gyroEnabled = EnableGyro();
+
+        AngleFromN = 0;
     }
 
     private void OnDestroy()

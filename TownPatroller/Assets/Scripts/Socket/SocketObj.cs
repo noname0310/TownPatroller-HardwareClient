@@ -68,7 +68,7 @@ public class SocketObj : MonoBehaviour
             lock (lockObject)
             {
                 act = TaskQueue.Dequeue();
-                act.Invoke();
+                act?.Invoke();
             }
         }
     }

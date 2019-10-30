@@ -177,16 +177,16 @@ public class SocketLinkerObj : MonoBehaviour
     {
         StartCoroutine(SendCamDataWithDelay());
         return;
-        texture2D = TextureToTexture2D(camManager.background.texture);
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
-        Destroy(texture2D);
+        //texture2D = TextureToTexture2D(camManager.background.texture);
+        //clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
+        //Destroy(texture2D);
 
     }
     private IEnumerator SendCamDataWithDelay()
     {
         yield return new WaitForSeconds(0.2f);
         texture2D = TextureToTexture2D(camManager.background.texture);
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
+        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));
         Destroy(texture2D);
     }
 

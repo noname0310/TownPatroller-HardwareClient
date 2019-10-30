@@ -91,8 +91,12 @@ public class BTCore : MonoBehaviour
     void OnMessageReceived()
     {
         received_message = bluetoothHelper.Read();
+
+        if (received_message == null)
+            return;
+
         AddStringToBuffer(received_message);
-        objectCarDevice.GetComponent<ObjectCarDevice>().Basecardivice.UpdateInfo(received_message);
+        carDivice.UpdateInfo(received_message);
         ppManager.CheckEOP(received_message);
     }
 
