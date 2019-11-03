@@ -32,7 +32,7 @@ public class SocketObj : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         TaskQueue = new Queue<Action>();
-        socketClient = new SocketClient(TaskQueue, this);
+        socketClient = new SocketClient(TaskQueue, this, lockObject);
     }
 
     public void OnConnectBtnClicked()
@@ -68,8 +68,8 @@ public class SocketObj : MonoBehaviour
             lock (lockObject)
             {
                 act = TaskQueue.Dequeue();
-                act?.Invoke();
             }
+            act.Invoke();
         }
     }
 

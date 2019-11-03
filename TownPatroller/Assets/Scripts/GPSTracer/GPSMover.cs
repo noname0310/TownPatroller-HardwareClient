@@ -13,7 +13,7 @@ namespace TownPatroller.GPSTracer
 {
     public class GPSMover : MonoBehaviour
     {
-        public GPSSpotManager gPSSpotManager;
+        public GPSSpotManager GPSSpotManager;
         private BaseCarDivice carDivice;
         public bool EnableTraceMode { get; set; }
 
@@ -35,26 +35,29 @@ namespace TownPatroller.GPSTracer
 
         public void _new(BaseCarDivice baseCarDivice)
         {
-            gPSSpotManager = new GPSSpotManager(0);
+            GPSSpotManager = new GPSSpotManager(0);
             carDivice = baseCarDivice;
             EnableTraceMode = true;
             CurrentMoveSequence = MoveSequence.ForcedForward;
 
             carDivice.statusparser.OnParsedSOP += Statusparser_OnParsedSOP;
-            //gPSSpotManager.AddPos(new GPSPosition(null, -100, 100));
-            //gPSSpotManager.AddPos(new GPSPosition(null, 1221, 312));
+        }
+
+        public void ChangeSpotManager(GPSSpotManager gPSSpotManager)
+        {
+            GPSSpotManager = gPSSpotManager;
         }
 
         public string GetCurrentPositonName()
         {
-            if (gPSSpotManager.GPSPositions.Count <= 1)
+            if (GPSSpotManager.GPSPositions.Count <= 1)
                 return "N/A";
             else
             {
-                if (gPSSpotManager.CurrentMovePosIndex == 1)
-                    return gPSSpotManager.GPSPositions.Last().LocationName;
+                if (GPSSpotManager.CurrentMovePosIndex == 0)
+                    return GPSSpotManager.GPSPositions.Last().LocationName;
                 else
-                    return gPSSpotManager.GPSPositions[gPSSpotManager.CurrentMovePosIndex - 1].LocationName;
+                    return GPSSpotManager.GPSPositions[GPSSpotManager.CurrentMovePosIndex - 1].LocationName;
             }
         }
 
@@ -62,7 +65,7 @@ namespace TownPatroller.GPSTracer
         {
             if (EnableTraceMode)
             {
-                if (gPSSpotManager.GPSPositions.Count == 0)
+                if (GPSSpotManager.GPSPositions.Count == 0)
                 {
                     MoveFront(0);
                     return;
@@ -71,7 +74,7 @@ namespace TownPatroller.GPSTracer
                 IGConsole.Instance.Main.println(CurrentMoveSequence.ToString());
 
                 GPSsPosition MyPos = /*new GPSsPosition(0, 0);//*/GPSCore.Instance.GetGPSsPosition();
-                GPSsPosition TargetPos = gPSSpotManager.GPSPositions[gPSSpotManager.CurrentMovePosIndex].GetGPSS();
+                GPSsPosition TargetPos = GPSSpotManager.GPSPositions[GPSSpotManager.CurrentMovePosIndex].GetGPSS();
 
                 float x = Mathf.Abs(MyPos.longitude - TargetPos.longitude);
                 float y = Mathf.Abs(MyPos.latitude - TargetPos.latitude);
@@ -82,7 +85,7 @@ namespace TownPatroller.GPSTracer
 
                 if (Distance < 20)
                 {
-                    gPSSpotManager.MoveNext();
+                    GPSSpotManager.MoveNext();
                     return;
                 }
 
@@ -428,11 +431,6 @@ namespace TownPatroller.GPSTracer
                         break;
                 }
             }
-        }
-
-        public void ChangeSpot(GPSSpotManager gPSSpotManager)
-        {
-
         }
 
         #region CalcMoveMethods

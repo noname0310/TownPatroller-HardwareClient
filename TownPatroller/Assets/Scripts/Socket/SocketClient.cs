@@ -26,14 +26,14 @@ namespace TownPatroller.SocketClient
 
         private const int SegmentSize = 1024;
 
-        public SocketClient(Queue<Action> taskQueue, SocketObj _socketObj)
+        public SocketClient(Queue<Action> taskQueue, SocketObj _socketObj, object LockObject) : base(LockObject)
         {
             TaskQueue = taskQueue;
             socketObj = _socketObj;
 
             ReadBuffer = new byte[SegmentSize];
             SendBuffer = new byte[SegmentSize];
-            packetSerializer = new PacketSerializer(724, SegmentSize);
+            packetSerializer = new PacketSerializer(798, SegmentSize);
 
             StopTask = true;
         }
@@ -100,7 +100,7 @@ namespace TownPatroller.SocketClient
                             var readBytes = networkStream.Read(ReadBuffer, offset, remaining);
                             if (readBytes == 0)
                             {
-                                throw new System.Exception("disconnected");
+                                throw new Exception("disconnected");
                             }
                             offset += readBytes;
                             remaining -= readBytes;

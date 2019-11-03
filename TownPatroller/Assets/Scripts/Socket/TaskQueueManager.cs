@@ -11,6 +11,13 @@ namespace TownPatroller.SocketClient
         protected Queue<Action> TaskQueue;
         protected SocketObj socketObj;
 
+        private object lockObject; 
+        
+        public TaskQueueManager(object LockObject)
+        {
+            lockObject = LockObject;
+        }
+
         protected void PrintlnIGConsole(string msg)
         {
             Action act;
@@ -18,7 +25,10 @@ namespace TownPatroller.SocketClient
                 act = () => IGConsole.Instance.Main.println(msg);
             else
                 act = () => socketObj.PrintStatusLabel(msg);
-            TaskQueue.Enqueue(act);
+            lock (lockObject)
+            {
+                TaskQueue.Enqueue(act);
+            }
         }
 
         protected void OnReceiveData(byte[] Buffer)
@@ -30,7 +40,10 @@ namespace TownPatroller.SocketClient
             }
 
             Action act = () => socketObj.OnReceiveData(BufferC);
-            TaskQueue.Enqueue(act);
+            lock (lockObject)
+            {
+                TaskQueue.Enqueue(act);
+            }
         }
     }
 }

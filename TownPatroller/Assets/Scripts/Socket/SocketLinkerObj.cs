@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TownPatroller.CarDevice;
 using TownPatroller.GPSTracer;
@@ -20,12 +19,10 @@ public class SocketLinkerObj : MonoBehaviour
     private IClientSender clientSender;
 
     private bool SendCamTexture;
-    private bool SendCarStatus;
 
     private void Start()
     {
         SendCamTexture = false;
-        SendCarStatus = true;
         CarStatusObject = GameObject.Find("CarStatusObject");
 
         objcarDevice = CarStatusObject.GetComponent<ObjectCarDevice>();
@@ -114,16 +111,32 @@ public class SocketLinkerObj : MonoBehaviour
                 break;
 
             case PacketType.CarStatusReceived:
-                if(SendCarStatus == true)
-                {
-                    StartCoroutine(SendCarDataWithDelay());
-                }
+                StartCoroutine(SendCarDataWithDelay());
                 break;
 
             case PacketType.CarGPSSpotStatusChangeReq:
                 CarGPSSpotStatusChangeReqPacket cgscrp = (CarGPSSpotStatusChangeReqPacket)basePacket;
-                tracerObj.gPSMover.ChangeSpot(cgscrp.gPSMover);
-                clientSender.SendPacket(new CarGPSStatusUpdatedPacket());
+                switch (cgscrp.GPSSpotManagerChangeType)
+                {
+                    case GPSSpotManagerChangeType.AddSpot:
+                        tracerObj.gPSMover.GPSSpotManager.AddPos(cgscrp.GPSPosition);
+                        clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.AddSpot, cgscrp.GPSPosition));
+                        break;
+                    case GPSSpotManagerChangeType.RemoveSpot:
+                        tracerObj.gPSMover.GPSSpotManager.RemovePos(cgscrp.Index);
+                        clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.RemoveSpot, cgscrp.Index));
+                        break;
+                    case GPSSpotManagerChangeType.SetCurrentPos:
+                        tracerObj.gPSMover.GPSSpotManager.CurrentMovePosIndex = cgscrp.Index;
+                        clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.SetCurrentPos, cgscrp.Index));
+                        break;
+                    case GPSSpotManagerChangeType.OverWrite:
+                        tracerObj.gPSMover.ChangeSpotManager(cgscrp.GPSMover);
+                        clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.OverWrite, cgscrp.GPSMover));
+                        break;
+                    default:
+                        break;
+                }
                 break;
 
             case PacketType.UpdateDataReq:
@@ -168,7 +181,7 @@ public class SocketLinkerObj : MonoBehaviour
     {
         yield return new WaitForSeconds(0.5f);
         clientSender.SendPacket(new DataUpdatedPacket(ModeType.AutoDriveMode));
-        clientSender.SendPacket(new CarGPSSpotStatusPacket(tracerObj.gPSMover.gPSSpotManager));
+        clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.OverWrite, tracerObj.gPSMover.GPSSpotManager));
 
         clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
     }
@@ -184,7 +197,7 @@ public class SocketLinkerObj : MonoBehaviour
     }
     private IEnumerator SendCamDataWithDelay()
     {
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.01f);
         texture2D = TextureToTexture2D(camManager.background.texture);
         clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));
         Destroy(texture2D);
