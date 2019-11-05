@@ -24,7 +24,7 @@ public class SocketLinkerObj : MonoBehaviour
     private void Start()
     {
         SendCamTexture = false;
-        CamQuality = 1;
+        CamQuality = 3;
         CarStatusObject = GameObject.Find("CarStatusObject");
 
         objcarDevice = CarStatusObject.GetComponent<ObjectCarDevice>();

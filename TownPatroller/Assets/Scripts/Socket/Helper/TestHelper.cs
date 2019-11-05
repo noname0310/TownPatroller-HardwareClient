@@ -13,6 +13,6 @@ public class TestHelper : MonoBehaviour
     {
         IP.text = "noname0310.iptime.org";
         Port.text = "20310";
-        ID.text = "242135";
+        ID.text = Random.Range(10000000, 99999999).ToString();
     }
 }
