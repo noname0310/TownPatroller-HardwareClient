@@ -8,7 +8,7 @@ public class CamManager : MonoBehaviour
     public Texture defaultBackground;
 
     public RawImage background;
-    public AspectRatioFitter fit;
+    public AspectRatioFitter AspectRatioFitter;
     public Text text;
 
     private uint camIndex = 0;
@@ -34,8 +34,9 @@ public class CamManager : MonoBehaviour
         if (!camAvalible)
             return;
 
-        float ratio = (float)CamDevice.width / (float)CamDevice.height;
-        fit.aspectRatio = ratio;
+        float ratio = CamDevice.width / (float)CamDevice.height;
+        if (AspectRatioFitter.aspectRatio != ratio)
+            AspectRatioFitter.aspectRatio = ratio;
 
         float scaleY = CamDevice.videoVerticallyMirrored ? -1f : 1f;
         if (background.rectTransform.localScale.x != 1f || background.rectTransform.localScale.y != scaleY || background.rectTransform.localScale.z != 1f)
@@ -64,8 +65,9 @@ public class CamManager : MonoBehaviour
             return;
         }
 
-        CamDevice = new WebCamTexture(devices[camIndex].name, Screen.width, Screen.height);
-
+        CamDevice = new WebCamTexture(devices[camIndex].name, 1920, 1080);
+        CamDevice.requestedFPS = 15;
+        //CamDevice.filterMode = FilterMode.Trilinear;
         CamDevice.Play();
         background.texture = CamDevice;
 

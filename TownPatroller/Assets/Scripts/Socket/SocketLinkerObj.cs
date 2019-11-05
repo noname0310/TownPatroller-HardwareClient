@@ -155,17 +155,14 @@ public class SocketLinkerObj : MonoBehaviour
                     case ModeType.AutoDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = true;
                         baseCarDivice.HalfManualMode = false;
-                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.AutoDriveMode));
                         break;
                     case ModeType.ManualDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = false;
                         baseCarDivice.HalfManualMode = false;
-                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.ManualDriveMode));
                         break;
                     case ModeType.HaifManualDriveMode:
                         tracerObj.gPSMover.EnableTraceMode = false;
                         baseCarDivice.HalfManualMode = true;
-                        clientSender.SendPacket(new DataUpdatedPacket(ModeType.HaifManualDriveMode));
                         break;
                     default:
                         break;
