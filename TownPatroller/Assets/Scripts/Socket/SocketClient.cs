@@ -45,7 +45,7 @@ namespace TownPatroller.SocketClient
             tcpClient = new TcpClient();
             try
             {
-                IPAddress serverip = IPAddress.Parse(ip);
+                IPAddress serverip = Dns.GetHostAddresses(ip)[0];
                 int serverport = int.Parse(port);
 
                 IPEndPoint iPEndPoint = new IPEndPoint(serverip, serverport);

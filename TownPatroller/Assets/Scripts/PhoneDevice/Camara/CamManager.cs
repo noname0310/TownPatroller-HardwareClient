@@ -66,9 +66,6 @@ public class CamManager : MonoBehaviour
 
         CamDevice = new WebCamTexture(devices[camIndex].name, Screen.width, Screen.height);
 
-        CamDevice.requestedHeight = 250;
-        CamDevice.requestedWidth = 400;
-        CamDevice.requestedFPS = 5;
         CamDevice.Play();
         background.texture = CamDevice;
 

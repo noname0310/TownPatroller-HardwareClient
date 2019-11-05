@@ -11,7 +11,7 @@ public class TestHelper : MonoBehaviour
 
     void Start()
     {
-        IP.text = "127.0.0.1";
+        IP.text = "noname0310.iptime.org";
         Port.text = "20310";
         ID.text = "242135";
     }

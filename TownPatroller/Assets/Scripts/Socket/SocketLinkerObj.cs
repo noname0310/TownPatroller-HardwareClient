@@ -19,10 +19,12 @@ public class SocketLinkerObj : MonoBehaviour
     private IClientSender clientSender;
 
     private bool SendCamTexture;
+    private int CamQuality;
 
     private void Start()
     {
         SendCamTexture = false;
+        CamQuality = 1;
         CarStatusObject = GameObject.Find("CarStatusObject");
 
         objcarDevice = CarStatusObject.GetComponent<ObjectCarDevice>();
@@ -46,13 +48,19 @@ public class SocketLinkerObj : MonoBehaviour
     {
         switch (basePacket.packetType)
         {
-            //case PacketType.ConnectionStat:
-            //break;
-
             case PacketType.CamReceived:
                 if (SendCamTexture == true)
                 {
-                    SendCamData();
+                    StartCoroutine(SendCamDataWithDelay());
+                }
+                break;
+
+            case PacketType.CamResolutionReq:
+                CamResolutionReqPacket crrp = (CamResolutionReqPacket)basePacket;
+                if (1 <= crrp.Resolution && crrp.Resolution <= 16)
+                {
+                    CamQuality = crrp.Resolution;
+                    clientSender.SendPacket(new CamResolutionPacket(CamQuality));
                 }
                 break;
 
@@ -68,7 +76,7 @@ public class SocketLinkerObj : MonoBehaviour
                         if (ccp.enable)
                         {
                             SendCamTexture = true;
-                            SendCamData();
+                            StartCoroutine(SendCamDataWithDelay());
                         }
                         else
                             SendCamTexture = false;
@@ -80,10 +88,22 @@ public class SocketLinkerObj : MonoBehaviour
                 break;
 
             case PacketType.CarStatusChangeReq:
-                if(tracerObj.gPSMover.EnableTraceMode == false)
-                {
-                    CarStatusChangeReqPacket cscrp = (CarStatusChangeReqPacket)basePacket;
+                CarStatusChangeReqPacket cscrp = (CarStatusChangeReqPacket)basePacket;
 
+                if (cscrp.ReqCarDevice.RF_LEDChanged)
+                    baseCarDivice.rf_LED = cscrp.ReqCarDevice.RF_LED;
+
+                if (cscrp.ReqCarDevice.LF_LEDChanged)
+                    baseCarDivice.lf_LED = cscrp.ReqCarDevice.LF_LED;
+
+                if (cscrp.ReqCarDevice.RB_LEDChanged)
+                    baseCarDivice.rb_LED = cscrp.ReqCarDevice.RB_LED;
+
+                if (cscrp.ReqCarDevice.LB_LEDChanged)
+                    baseCarDivice.lb_LED = cscrp.ReqCarDevice.LB_LED;
+
+                if (tracerObj.gPSMover.EnableTraceMode == false)
+                {
                     if (cscrp.ReqCarDevice.R_motorDIRChanged)
                         baseCarDivice.r_motorDIR = cscrp.ReqCarDevice.R_motorDIR;
 
@@ -95,18 +115,6 @@ public class SocketLinkerObj : MonoBehaviour
 
                     if (cscrp.ReqCarDevice.L_motorpowerChanged)
                         baseCarDivice.l_motorpower = cscrp.ReqCarDevice.L_motorpower;
-
-                    if (cscrp.ReqCarDevice.RF_LEDChanged)
-                        baseCarDivice.rf_LED = cscrp.ReqCarDevice.RF_LED;
-
-                    if (cscrp.ReqCarDevice.LF_LEDChanged)
-                        baseCarDivice.lf_LED = cscrp.ReqCarDevice.LF_LED;
-
-                    if (cscrp.ReqCarDevice.RB_LEDChanged)
-                        baseCarDivice.rb_LED = cscrp.ReqCarDevice.RB_LED;
-
-                    if (cscrp.ReqCarDevice.LB_LEDChanged)
-                        baseCarDivice.lb_LED = cscrp.ReqCarDevice.LB_LED;
                 }
                 break;
 
@@ -165,13 +173,6 @@ public class SocketLinkerObj : MonoBehaviour
                 clientSender.SendPacket(new DataUpdatedPacket(dup.modeType));
                 break;
 
-            case PacketType.UniversalCommand:
-                UniversalCommandPacket ucp = (UniversalCommandPacket)basePacket;
-                if(ucp.keyType == KeyType.Command)
-                {
-                }
-                break;
-
             default:
                 break;
         }
@@ -182,24 +183,15 @@ public class SocketLinkerObj : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
         clientSender.SendPacket(new DataUpdatedPacket(ModeType.AutoDriveMode));
         clientSender.SendPacket(new CarGPSSpotStatusPacket(GPSSpotManagerChangeType.OverWrite, tracerObj.gPSMover.GPSSpotManager));
-
+        clientSender.SendPacket(new CamResolutionPacket(CamQuality));
         clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
     }
 
-    private void SendCamData()
-    {
-        StartCoroutine(SendCamDataWithDelay());
-        return;
-        //texture2D = TextureToTexture2D(camManager.background.texture);
-        //clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(10)));
-        //Destroy(texture2D);
-
-    }
     private IEnumerator SendCamDataWithDelay()
     {
         yield return new WaitForSeconds(0.01f);
-        texture2D = TextureToTexture2D(camManager.background.texture);
-        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(50)));
+        texture2D = TextureToTexture2D(camManager.background.texture, CamQuality);
+        clientSender.SendPacket(new CamPacket(texture2D.EncodeToJPG(100)));
         Destroy(texture2D);
     }
 
@@ -209,11 +201,11 @@ public class SocketLinkerObj : MonoBehaviour
         clientSender.SendPacket(new CarStatusPacket(baseCarDivice.GetPacketCarDivice(), GPSCore.Instance.GetGPSsPosition().GetGPSPosition(tracerObj.gPSMover.GetCurrentPositonName()), CompassCore.Instance.AngleFromN));
     }
 
-    private Texture2D TextureToTexture2D(Texture texture)
+    private Texture2D TextureToTexture2D(Texture texture, int quality)
     {
-        Texture2D texture2D = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
+        Texture2D texture2D = new Texture2D(texture.width/quality, texture.height/quality, TextureFormat.RGB24, false);
         RenderTexture currentRT = RenderTexture.active;
-        RenderTexture renderTexture = RenderTexture.GetTemporary(texture.width, texture.height, 32);
+        RenderTexture renderTexture = RenderTexture.GetTemporary(texture.width/quality, texture.height/quality, 24);
         Graphics.Blit(texture, renderTexture);
 
         RenderTexture.active = renderTexture;
