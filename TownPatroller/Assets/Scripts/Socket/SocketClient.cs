@@ -7,7 +7,7 @@ using TPPacket.Serializer;
 
 namespace TownPatroller.SocketClient
 {
-    interface IClientSender
+    public interface IClientSender
     {
         void SendPacket(object packet);
     }
@@ -33,7 +33,7 @@ namespace TownPatroller.SocketClient
 
             ReadBuffer = new byte[SegmentSize];
             SendBuffer = new byte[SegmentSize];
-            packetSerializer = new PacketSerializer(798, SegmentSize);
+            packetSerializer = new PacketSerializer(1012);
 
             StopTask = true;
         }
@@ -92,20 +92,11 @@ namespace TownPatroller.SocketClient
                 {
                     if (0 < tcpClient.Available)
                     {
-                        int remaining = SegmentSize;
-                        int offset = 0;
+                        ReadNetworkStreamToReadBuffer(0, PacketHeaderSize.HeaderSize);
+                        HeaderInfo headerInfo = PacketDeserializer.ParseHeader(ReadBuffer);
+                        ReadNetworkStreamToReadBuffer(PacketHeaderSize.HeaderSize, headerInfo.SegmentLength);
 
-                        while (remaining > 0)
-                        {
-                            var readBytes = networkStream.Read(ReadBuffer, offset, remaining);
-                            if (readBytes == 0)
-                            {
-                                throw new Exception("disconnected");
-                            }
-                            offset += readBytes;
-                            remaining -= readBytes;
-                        }
-                        OnReceiveData(ReadBuffer);
+                        OnReceiveData(ReadBuffer, PacketHeaderSize.HeaderSize + headerInfo.SegmentLength);
                     }
                 }
                 else
@@ -118,38 +109,39 @@ namespace TownPatroller.SocketClient
             networkStream.Dispose();
         }
 
-        public void SendInitPacket(object packet)
+        public void ReadNetworkStreamToReadBuffer(int offset, int Length)
         {
-            packetSerializer.SerializeSingle(SendBuffer, packet);
-            SendData();
+            int remainingBytes = Length;
+            int Offset = offset;
+
+            while (remainingBytes > 0)
+            {
+                var readBytes = networkStream.Read(ReadBuffer, Offset, remainingBytes);
+                if (readBytes == 0)
+                {
+                    throw new Exception("disconnected");
+                }
+                Offset += readBytes;
+                remainingBytes -= readBytes;
+            }
         }
 
         public void SendPacket(object packet)
         {
             packetSerializer.Serialize(packet);
-            while (true)
+            for (int i = 0; i < packetSerializer.SegmentCount; i++)
             {
-                int result = packetSerializer.GetSerializedSegment(SendBuffer);
+                int fullSegmentLength = packetSerializer.GetSerializedSegment(SendBuffer);
 
-                if (result == 0)
-                {
-                    break;
-                }
-
-                SendData();
+                SendData(fullSegmentLength);
             }
             packetSerializer.Clear();
         }
 
-        private void SendData()
+        private void SendData(int length)
         {
-            networkStream.Write(SendBuffer, 0, SendBuffer.Length);
+            networkStream.Write(SendBuffer, 0, length);
             networkStream.Flush();
-
-            for (int i = 0; i < SendBuffer.Length; i++)
-            {
-                SendBuffer[i] = 0;
-            }
         }
     }
 }

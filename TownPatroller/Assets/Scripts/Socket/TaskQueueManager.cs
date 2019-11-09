@@ -31,10 +31,10 @@ namespace TownPatroller.SocketClient
             }
         }
 
-        protected void OnReceiveData(byte[] Buffer)
+        protected void OnReceiveData(byte[] Buffer, int DataLength)
         {
-            byte[] BufferC = new byte[Buffer.Length];
-            for (int i = 0; i < Buffer.Length; i++)
+            byte[] BufferC = new byte[DataLength];
+            for (int i = 0; i < DataLength; i++)
             {
                 BufferC[i] = Buffer[i];
             }

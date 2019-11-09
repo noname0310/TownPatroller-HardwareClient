@@ -51,7 +51,7 @@ public class SocketObj : MonoBehaviour
             packetReceiver = new PacketReciver(ID);
             packetReceiver.OnDataInvoke += PacketReceiver_OnDataInvoke;
             PrintStatusLabel("Connection Pending");
-            socketClient.SendInitPacket(new ConnectionPacket(true, ID, true));
+            socketClient.SendPacket(new ConnectionPacket(true, ID, true));
         }
         else
         {
@@ -114,8 +114,7 @@ public class SocketObj : MonoBehaviour
 
     public void OnReceiveData(byte[] Buffer)
     {
-        Segment segment = (Segment)PacketDeserializer.Deserialize(Buffer);
-        packetReceiver.AddSegment(segment);
+        packetReceiver.AddSegment(Buffer);
     }
 
     public void PrintStatusLabel(string msg)
