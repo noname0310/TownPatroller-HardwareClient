@@ -36,6 +36,7 @@ namespace TownPatroller.GPSTracer
         public void _new(BaseCarDivice baseCarDivice)
         {
             GPSSpotManager = new GPSSpotManager(0);
+            //GPSSpotManager.AddPos(new GPSsPosition(10, 10).GetGPSPosition());
             carDivice = baseCarDivice;
             EnableTraceMode = true;
             CurrentMoveSequence = MoveSequence.ForcedForward;
@@ -81,9 +82,8 @@ namespace TownPatroller.GPSTracer
 
                 float Distance = Mathf.Sqrt(x * x + y * y);
                 float ReqAngleFromN = CalcReqAngleFromN(MyPos, TargetPos);
-                ReqAngleFromN = 360 - ReqAngleFromN;
 
-                if (Distance < 20)
+                if (Distance < 5)
                 {
                     GPSSpotManager.MoveNext();
                     return;
@@ -148,7 +148,7 @@ namespace TownPatroller.GPSTracer
                                 CurrentMoveSequence = MoveSequence.ForcedForward;
                                 goto case MoveSequence.ForcedForward;
                             }
-                            else if (direction == Direction.Right && TraceDraction == Direction.Right)
+                            else if (direction == Direction.Left && TraceDraction == Direction.Right)
                             {
                                 CurrentMoveSequence = MoveSequence.ForcedForward;
                                 goto case MoveSequence.ForcedForward;
@@ -216,12 +216,12 @@ namespace TownPatroller.GPSTracer
 
                             if (RBlocked == true)
                             {
-                                reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
                                 TraceDraction = Direction.Right;
                             }
                             else if(LBlocked == true)
                             {
-                                reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
+                                reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
                                 TraceDraction = Direction.Left;
                             }
                             else
@@ -230,12 +230,12 @@ namespace TownPatroller.GPSTracer
 
                                 if (direction == Direction.Right)
                                 {
-                                    reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
+                                    reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
                                     TraceDraction = Direction.Left;
                                 }
                                 else//왼쪽에 ReqAngleFromN존재
                                 {
-                                    reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                    reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
                                     TraceDraction = Direction.Right;
                                 }
                             }
@@ -326,16 +326,14 @@ namespace TownPatroller.GPSTracer
                                         rotationSaved = true;
                                         reqrotation = (CompassCore.Instance.AngleFromN + 180) % 360;
                                     }
-                                    else
+
+                                    if (RotateToReqAngle(reqrotation) == false)
                                     {
-                                        if (RotateToReqAngle(reqrotation) == false)
-                                        {
-                                            MoveFrontTickCount *= MoveFrontTickCount;
-                                            CurrentMoveFrontCount = 0;
-                                            TraceDraction = (TraceDraction == Direction.Right) ? Direction.Left : Direction.Right;
-                                            ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
-                                            goto case ProgressiveLengthMeasureSubSequence.Front;
-                                        }
+                                        MoveFrontTickCount *= MoveFrontTickCount;
+                                        CurrentMoveFrontCount = 0;
+                                        TraceDraction = (TraceDraction == Direction.Right) ? Direction.Left : Direction.Right;
+                                        ProgressiveLengthMeasureSubSequence = ProgressiveLengthMeasureSubSequence.Front;
+                                        goto case ProgressiveLengthMeasureSubSequence.Front;
                                     }
                                     break;
 
@@ -346,11 +344,11 @@ namespace TownPatroller.GPSTracer
                                         
                                         if (TraceDraction == Direction.Left)
                                         {
-                                            reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
-                                        }
-                                        else//왼쪽에 ReqAngleFromN존재
-                                        {
                                             reqrotation = (CompassCore.Instance.AngleFromN + 90) % 360;
+                                        }
+                                        else
+                                        {
+                                            reqrotation = (CompassCore.Instance.AngleFromN - 90) % 360;
                                         }
                                     }
                                     if (RotateToReqAngle(reqrotation) == false)
@@ -498,24 +496,24 @@ namespace TownPatroller.GPSTracer
         {
             if (Mathf.Abs(CompassCore.Instance.AngleFromN - ReqAngleFromN) > 180)
             {
-                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
+                if (CompassCore.Instance.AngleFromN < ReqAngleFromN)
                 {
-                    return Direction.Right;
+                    return Direction.Left;
                 }
                 else
                 {
-                    return Direction.Left;
+                    return Direction.Right;
                 }
             }
             else
             {
-                if (CompassCore.Instance.AngleFromN > ReqAngleFromN)
+                if (CompassCore.Instance.AngleFromN < ReqAngleFromN)
                 {
-                    return Direction.Left;
+                    return Direction.Right;
                 }
                 else
                 {
-                    return Direction.Right;
+                    return Direction.Left;
                 }
             }
         }
@@ -567,16 +565,16 @@ namespace TownPatroller.GPSTracer
 
         private void RotationR(byte power)
         {
-            carDivice.l_motorDIR = true;
-            carDivice.r_motorDIR = false;
+            carDivice.l_motorDIR = false;
+            carDivice.r_motorDIR = true;
             carDivice.l_motorpower = power;
             carDivice.r_motorpower = power;
         }
 
         private void RotationL(byte power)
         {
-            carDivice.l_motorDIR = false;
-            carDivice.r_motorDIR = true;
+            carDivice.l_motorDIR = true;
+            carDivice.r_motorDIR = false;
             carDivice.l_motorpower = power;
             carDivice.r_motorpower = power;
         }

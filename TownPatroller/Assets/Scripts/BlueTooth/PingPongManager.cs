@@ -50,7 +50,7 @@ namespace TownPatroller.Bluetooth
                 if (item == ']')
                 {
                     EOPERRCount = 0;
-                    StopCoroutine(EOPListenLimitEunmer);//
+                    StopCoroutine(EOPListenLimitEunmer);
                     OnRTSpeak?.Invoke();
                     CommandDequeue();
                     EOPListenLimitEunmer = StartCoroutine(EOPListenLimiter());
@@ -63,7 +63,6 @@ namespace TownPatroller.Bluetooth
             yield return new WaitForSeconds(0.05f);
 
             PacketBuffer.Append(']');
-            //IGConsole.Instance.Main.println(PacketBuffer.ToString());
             bTCore.SendMsg(PacketBuffer.ToString());
 
             PacketBuffer.Clear();
@@ -83,8 +82,6 @@ namespace TownPatroller.Bluetooth
                 IGConsole.Instance.Main.println("try to reconnecting");
                 bTCore.DisconnectBT();
             }
-
-            //StopCoroutine(EOPListenLimitEunmer);
 
             OnRTSpeak?.Invoke();
             CommandDequeue();

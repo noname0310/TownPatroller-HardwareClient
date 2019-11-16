@@ -12,7 +12,6 @@ public class CompassCore : MonoBehaviour
     public GameObject CompassUI;
     private Text RotText;
 
-    private float CompassAngle;
     public float AngleFromN;
 
     private static string[] CarStatusNum0TO360 = new string[362];
@@ -65,15 +64,13 @@ public class CompassCore : MonoBehaviour
     {
         if (gyroEnabled)
         {
-            CompassAngle = Input.compass.trueHeading; // -gyro.attitude.eulerAngles.z;// + 90;
-            Compass.transform.localRotation = Quaternion.Euler(0f, 0f, CompassAngle);
-
-            AngleFromN = -CompassAngle;
+            AngleFromN = Input.compass.trueHeading;
+            Compass.transform.localRotation = Quaternion.Euler(0f, 0f, AngleFromN);
             if (AngleFromN < 0)
                 AngleFromN += 360;
             if (360 < (int)AngleFromN || (int)AngleFromN < 0)
                 AngleFromN = 361;
-            RotText.text = CarStatusNum0TO360[((int)AngleFromN)];
+            RotText.text = CarStatusNum0TO360[(int)AngleFromN];
         }
     }
 }
