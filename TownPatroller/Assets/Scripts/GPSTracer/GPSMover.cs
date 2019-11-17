@@ -83,7 +83,7 @@ namespace TownPatroller.GPSTracer
                 float Distance = Mathf.Sqrt(x * x + y * y);
                 float ReqAngleFromN = CalcReqAngleFromN(MyPos, TargetPos);
 
-                if (Distance < 5)
+                if (Distance < 0.00006)
                 {
                     GPSSpotManager.MoveNext();
                     return;

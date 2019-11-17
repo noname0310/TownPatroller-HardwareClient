@@ -48,7 +48,7 @@ public class GPSCore : MonoBehaviour
             yield break;
         }
 
-        Input.location.Start();
+        Input.location.Start(0.1f, 0.1f);
         int maxWait = 20;
         while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
         {
